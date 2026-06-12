@@ -10,8 +10,9 @@
 *.pem
 npm-debug.log*
 
-# env (none required for V1, but never commit them)
+# env — never commit secrets; the example file is the contract
 .env*
+!.env.example
 
 # typescript
 *.tsbuildinfo

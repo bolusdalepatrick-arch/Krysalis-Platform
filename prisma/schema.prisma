@@ -1,0 +1,446 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum SystemRole {
+  USER
+  MODERATOR
+  EMPLOYEE
+  CLIENT
+  ADMIN
+}
+
+enum JobStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  REVIEW
+  COMPLETED
+}
+
+enum BidStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum ChannelKind {
+  DEPARTMENT
+  JOB
+  DM
+  FIRM
+  ACCOUNT
+}
+
+enum XpReason {
+  LESSON_COMPLETED
+  COURSE_COMPLETED
+  BID_ACCEPTED
+  JOB_COMPLETED
+  DEAL_WON
+  ONBOARDING_COMPLETED
+  FORUM_POST
+}
+
+enum AccountStatus {
+  PROSPECT
+  ACTIVE
+  DORMANT
+}
+
+enum AccountKind {
+  INDIVIDUAL
+  BUSINESS
+}
+
+enum DealStage {
+  INBOUND
+  DISCOVERY
+  PROPOSAL
+  VERBAL
+  WON
+  LOST
+}
+
+enum DealSource {
+  WEBSITE
+  REFERRAL
+  OUTBOUND
+  EVENT
+}
+
+enum ActivityKind {
+  NOTE
+  CALL
+  EMAIL
+  MEETING
+  STAGE_CHANGE
+}
+
+enum BookingStatus {
+  UNCLAIMED
+  CLAIMED
+  ARCHIVED
+}
+
+// ── Identity ────────────────────────────────────────────────
+model User {
+  id           String      @id @default(uuid())
+  email        String      @unique
+  name         String
+  title        String?     // e.g. "Senior Engineer" — shown on profiles
+  role         SystemRole  @default(USER)
+  isSystem     Boolean     @default(false) // the Shadow and Gate personas
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  accountId    String?     // CLIENT users: the company they belong to
+  account      Account?    @relation("AccountUsers", fields: [accountId], references: [id], onDelete: SetNull)
+
+  experiencePoints Int     @default(0)
+  currentTierLevel Int     @default(1)
+  totalEarnings    Decimal @default(0) @db.Decimal(12, 2)
+
+  onboardingCompletedAt  DateTime? // employees: first-week checklist finished
+  portalStartDismissedAt DateTime? // clients: orientation read (both kinds)
+  detailsConfirmedAt     DateTime? // individual clients: setup step 1 (7.13)
+  briefReviewedAt        DateTime? // individual clients: setup step 3 (7.13)
+
+  bids               Bid[]
+  assignedJobs       JobMember[]
+  enrollments        Enrollment[]
+  lessonCompletions  LessonCompletion[]
+  sentMessages       Message[]
+  channelMemberships ChannelMember[]
+  forumPosts         ForumPost[]
+  vaultUploads       VaultAsset[]
+  xpEvents           XpEvent[]
+  portalGuideEdits   PortalGuide[]
+  ownedDeals         Deal[]             @relation("DealOwner")
+  dealActivities     DealActivity[]
+  claimedCards       BookingCard[]      @relation("ClaimedCards")
+  createdAt          DateTime           @default(now())
+}
+
+model Department {
+  id          String      @id @default(uuid())
+  name        String      @unique
+  slug        String      @unique
+  description String
+  members     User[]
+  courses     Course[]    @relation("DepartmentCourses")
+  jobs        Job[]
+  channel     Channel?
+  forumPosts  ForumPost[]
+
+  onboardingCourseId String? @unique // the department's first-week primer (7.13)
+  onboardingCourse   Course? @relation("DepartmentPrimer", fields: [onboardingCourseId], references: [id], onDelete: SetNull)
+}
+
+// ── Marketplace ─────────────────────────────────────────────
+model Job {
+  id           String     @id @default(uuid())
+  title        String
+  brief        String     // one-sentence board-card summary
+  description  String     // full markdown body
+  status       JobStatus  @default(OPEN)
+  grossValue   Decimal    @db.Decimal(12, 2) // client pays
+  workerPool   Decimal    @db.Decimal(12, 2) // allocated to workers
+  firmMargin   Decimal    @db.Decimal(12, 2) // retained; invariant: pool + margin = gross
+  accountId    String
+  account      Account    @relation(fields: [accountId], references: [id])
+  dealId       String?    @unique // the won deal this engagement converted from (7.11)
+  deal         Deal?      @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id])
+  createdAt    DateTime   @default(now())
+  dueAt        DateTime?
+  completedAt  DateTime?
+
+  bids        Bid[]
+  workers     JobMember[]
+  vaultAssets VaultAsset[]
+  channel     Channel?
+
+  @@index([status, departmentId])
+}
+
+model JobMember {
+  jobId    String
+  job      Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  memberId String
+  member   User   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@id([jobId, memberId])
+}
+
+model Bid {
+  id            String    @id @default(uuid())
+  jobId         String
+  job           Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  memberId      String
+  member        User      @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  proposedSplit Decimal   @db.Decimal(10, 2)
+  pitchText     String?
+  status        BidStatus @default(PENDING)
+  createdAt     DateTime  @default(now())
+
+  @@unique([jobId, memberId])
+  @@index([jobId, status])
+}
+
+// ── Academy ─────────────────────────────────────────────────
+model Course {
+  id           String       @id @default(uuid())
+  title        String
+  description  String
+  departmentId String
+  department   Department   @relation("DepartmentCourses", fields: [departmentId], references: [id], onDelete: Cascade)
+  primerFor    Department?  @relation("DepartmentPrimer")
+  modules      Module[]
+  enrollments  Enrollment[]
+}
+
+model Module {
+  id       String   @id @default(uuid())
+  title    String
+  order    Int
+  courseId String
+  course   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons  Lesson[]
+}
+
+model Lesson {
+  id          String             @id @default(uuid())
+  title       String
+  order       Int
+  body        String             // markdown
+  assetUrl    String?
+  durationMin Int?
+  moduleId    String
+  module      Module             @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  completions LessonCompletion[]
+}
+
+model Enrollment {
+  id          String   @id @default(uuid())
+  memberId    String
+  member      User     @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progressPct Float    @default(0) // denormalized; recomputed from completions
+  isCompleted Boolean  @default(false)
+  updatedAt   DateTime @updatedAt
+
+  @@unique([memberId, courseId])
+}
+
+model LessonCompletion {
+  memberId    String
+  member      User     @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  lessonId    String
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completedAt DateTime @default(now())
+
+  @@id([memberId, lessonId])
+}
+
+// ── Communications ──────────────────────────────────────────
+model Channel {
+  id           String          @id @default(uuid())
+  kind         ChannelKind
+  name         String          // "engineering", "job-meridian-rebrand"; derived label for DMs
+  departmentId String?         @unique
+  department   Department?     @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  jobId        String?         @unique
+  job          Job?            @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  accountId    String?         @unique
+  account      Account?        @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  members      ChannelMember[] // explicit rows for DMs only; others derive membership
+  messages     Message[]
+  createdAt    DateTime        @default(now())
+}
+
+model ChannelMember {
+  channelId String
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([channelId, userId])
+}
+
+model Message {
+  id            String       @id @default(uuid())
+  channelId     String
+  channel       Channel      @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  senderId      String
+  sender        User         @relation(fields: [senderId], references: [id])
+  body          String
+  isShadowDraft Boolean      @default(false) // Shadow proposal awaiting approval
+  approvedById  String?      // user id; intentionally scalar (display-only)
+  bookingCardId String?      @unique // renders the card inline in #new-business (7.12)
+  bookingCard   BookingCard? @relation(fields: [bookingCardId], references: [id], onDelete: Cascade)
+  createdAt     DateTime     @default(now())
+
+  @@index([channelId, createdAt])
+}
+
+model ForumPost {
+  id           String      @id @default(uuid())
+  authorId     String
+  author       User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  departmentId String?     // null = firm-wide
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  title        String?
+  body         String
+  parentId     String?
+  parent       ForumPost?  @relation("Replies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies      ForumPost[] @relation("Replies")
+  createdAt    DateTime    @default(now())
+
+  @@index([createdAt])
+}
+
+// ── Vault ───────────────────────────────────────────────────
+model VaultAsset {
+  id             String   @id @default(uuid())
+  title          String
+  fileUrl        String
+  fileType       String   // "pdf" | "doc" | "sheet" | "image" | "figma" | "link"
+  sizeKb         Int?
+  isSharedSocial Boolean  @default(false) // visible firm-wide ("Commons")
+  uploadedById   String
+  uploadedBy     User     @relation(fields: [uploadedById], references: [id])
+  jobId          String?
+  job            Job?     @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now())
+
+  @@index([jobId])
+  // V3 seam: add `embedding Unsupported("vector(1536)")?` + pgvector extension
+}
+
+// ── CRM & the gate ──────────────────────────────────────────
+model Account {
+  id        String        @id @default(uuid())
+  name      String        @unique
+  kind      AccountKind   @default(BUSINESS)
+  website   String?
+  status    AccountStatus @default(PROSPECT)
+  notes     String?
+  contacts  Contact[]
+  deals     Deal[]
+  jobs      Job[]
+  portalUsers User[]      @relation("AccountUsers")
+  channel   Channel?      // the ACCOUNT thread, provisioned at conversion
+  createdAt DateTime      @default(now())
+}
+
+model Contact {
+  id        String   @id @default(uuid())
+  accountId String
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  name      String
+  email     String
+  title     String?
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([accountId])
+}
+
+model Deal {
+  id              String       @id @default(uuid())
+  title           String
+  accountId       String
+  account         Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  ownerId         String
+  owner           User         @relation("DealOwner", fields: [ownerId], references: [id])
+  stage           DealStage    @default(INBOUND)
+  source          DealSource
+  value           Decimal?     @db.Decimal(12, 2) // required before WON
+  expectedCloseAt DateTime?
+  wonAt           DateTime?
+  lostAt          DateTime?
+  lostReason      String?      // required on LOST, plain sentence
+  bookingCard     BookingCard?
+  job             Job?         // the engagement this converted into
+  activities      DealActivity[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([stage])
+  @@index([ownerId])
+  @@index([accountId])
+}
+
+model DealActivity {
+  id        String       @id @default(uuid())
+  dealId    String
+  deal      Deal         @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User         @relation(fields: [authorId], references: [id])
+  kind      ActivityKind
+  body      String
+  createdAt DateTime     @default(now())
+
+  @@index([dealId, createdAt])
+}
+
+model BookingCard {
+  id               String        @id @default(uuid())
+  externalRef      String        @unique // n8n's bookingId — the idempotency key
+  name             String
+  email            String
+  company          String
+  companySize      String
+  automationGoal   String
+  slotStart        DateTime
+  slotEnd          DateTime
+  status           BookingStatus @default(UNCLAIMED)
+  claimedById      String?
+  claimedBy        User?         @relation("ClaimedCards", fields: [claimedById], references: [id], onDelete: SetNull)
+  claimedAt        DateTime?
+  dealId           String?       @unique // the deal opened on claim
+  deal             Deal?         @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  message          Message?      // its inline rendering in #new-business
+  lastWebhookError String?       // outbound claim notification failure, if any
+  submittedAt      DateTime
+  createdAt        DateTime      @default(now())
+
+  @@index([status])
+}
+
+// ── Ledger & portal content ─────────────────────────────────
+model XpEvent {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Int
+  reason    XpReason
+  refId     String?  // lessonId / jobId / postId etc.
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model PortalGuide {
+  id          String   @id @default("main") // single row
+  markdown    String
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+  updatedBy   User?    @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+}
+
+model InfoBarMessage {
+  id        String   @id @default(uuid())
+  text      String
+  href      String?
+  isActive  Boolean  @default(true)
+  order     Int
+  updatedAt DateTime @updatedAt
+}

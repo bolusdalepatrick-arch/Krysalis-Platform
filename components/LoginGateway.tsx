@@ -1,124 +1,96 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
-import Logo from "./Logo";
-import { useApp } from "@/lib/state";
-import type { PortalMode } from "@/lib/types";
+import { useState } from "react";
+import clsx from "clsx";
+import { signIn } from "@/app/actions/auth";
+
+type Side = "employee" | "client";
 
 /**
- * Dual-Entry Gateway (PRD §3). The segmented toggle flips the page-level
- * theme class via global state — every themed surface transitions in 500ms.
- * Mock auth: any input signs in; default session is a full Admin.
+ * Dual-entry gateway, kept from V1 and restyled (PRD section 6). The toggle
+ * previews the two theme scopes with the 500ms crossfade; identity is still
+ * decided server-side by the signIn action.
  */
 export default function LoginGateway() {
-  const { state, dispatch } = useApp();
-  const router = useRouter();
-  const [user, setUser] = useState("");
-  const [pass, setPass] = useState("");
-  const mode = state.portalMode;
-
-  function setMode(m: PortalMode) {
-    dispatch({ type: "portal", mode: m });
-  }
-
-  function signIn(e: FormEvent) {
-    e.preventDefault();
-    dispatch({ type: "role", role: "admin" }); // default session = Admin
-    router.push(mode === "employee" ? "/dashboard" : "/client-portal");
-  }
+  const [side, setSide] = useState<Side>("employee");
 
   return (
-    <main className="relative flex min-h-dvh items-center justify-center overflow-hidden px-4 py-10">
-      {/* ambient themed glow behind the card */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-32 left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-accent/15 blur-3xl transition-colors duration-500"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-40 right-0 h-80 w-80 rounded-full bg-glow/10 blur-3xl transition-colors duration-500"
-      />
+    <div
+      className={clsx(
+        "theme-fade min-h-dvh bg-base text-primary",
+        side === "employee" ? "theme-employee" : "theme-client",
+      )}
+    >
+      <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center px-6 py-12">
+        <h1 className="text-2xl font-bold tracking-[-0.01em]">Krysalis</h1>
+        <p className="mt-2 text-sm text-secondary">
+          {side === "employee"
+            ? "The firm's operating system: work, learning, and the record of both."
+            : "Your work with the firm — status, files, and a direct line to the team."}
+        </p>
 
-      <div className="w-full max-w-md rounded-3xl border border-ink/15 bg-surface/40 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
-        <div className="mb-6 flex flex-col items-center gap-2 text-center">
-          <Logo size={44} />
-          <h1 className="font-display text-2xl font-bold tracking-tight">
-            {mode === "employee" ? "Krysalis OS" : "Krysalis Client Platform"}
-          </h1>
-          <p className="text-sm text-soft">
-            {mode === "employee" ? "The internal hub for builders & agents." : "Your engagement, beautifully organized."}
-          </p>
-        </div>
-
-        {/* Segmented toggle — thumb animates between segments */}
-        <div className="relative mb-6 grid grid-cols-2 rounded-full border border-ink/10 bg-canvas/50 p-1">
-          <span
-            aria-hidden
-            className={`absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-accent shadow-lg transition-transform duration-300 ease-out ${
-              mode === "client" ? "translate-x-full" : "translate-x-0"
-            }`}
-          />
+        <div
+          role="group"
+          aria-label="Choose your entrance"
+          className="mt-8 grid grid-cols-2 gap-1 rounded-s border border-line bg-inset p-1"
+        >
           {(
             [
-              ["employee", "Employee Portal"],
-              ["client", "Client Portal"],
-            ] as [PortalMode, string][]
-          ).map(([m, label]) => (
+              ["employee", "Employee hub"],
+              ["client", "Client portal"],
+            ] as [Side, string][]
+          ).map(([s, label]) => (
             <button
-              key={m}
+              key={s}
               type="button"
-              onClick={() => setMode(m)}
-              aria-pressed={mode === m}
-              className={`relative z-10 min-h-11 rounded-full text-sm font-semibold transition-colors duration-300 ${
-                mode === m ? "text-canvas" : "text-soft hover:text-ink"
-              }`}
+              onClick={() => setSide(s)}
+              aria-pressed={side === s}
+              className={clsx(
+                "h-9 rounded-s text-sm",
+                side === s
+                  ? "border border-line bg-raised font-medium text-primary"
+                  : "text-secondary hover:text-primary",
+              )}
             >
               {label}
             </button>
           ))}
         </div>
 
-        <form onSubmit={signIn} className="space-y-4">
+        <form action={signIn} className="mt-6 flex flex-col gap-4">
+          <input type="hidden" name="side" value={side} />
           <label className="block">
-            <span className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-soft">
-              Username / Email
-            </span>
+            <span className="eyebrow mb-1.5 block">Email</span>
             <input
-              value={user}
-              onChange={(e) => setUser(e.target.value)}
-              placeholder="you@krysalis.ai"
+              name="email"
+              type="text"
               autoComplete="username"
-              className="min-h-11 w-full rounded-xl border border-ink/15 bg-canvas/50 px-4 text-base text-ink placeholder:text-soft/60 focus:border-accent"
+              placeholder="you@krysalis.studio"
+              className="h-10 w-full rounded-s border border-line bg-inset px-3 text-md text-primary placeholder:text-muted"
             />
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-soft">Password</span>
+            <span className="eyebrow mb-1.5 block">Password</span>
             <input
+              name="password"
               type="password"
-              value={pass}
-              onChange={(e) => setPass(e.target.value)}
-              placeholder="••••••••"
               autoComplete="current-password"
-              className="min-h-11 w-full rounded-xl border border-ink/15 bg-canvas/50 px-4 text-base text-ink placeholder:text-soft/60 focus:border-accent"
+              className="h-10 w-full rounded-s border border-line bg-inset px-3 text-md text-primary"
             />
           </label>
-
-          {/* Reserved slot: password-update / 2FA block lands here in V2 without re-layout (PRD §3). */}
-          <div data-slot="security-extras" aria-hidden className="h-3" />
-
           <button
             type="submit"
-            className="min-h-12 w-full rounded-xl bg-accent font-display text-base font-semibold text-canvas shadow-lg transition-transform duration-150 hover:brightness-110 active:scale-[0.98]"
+            className="mt-2 h-10 rounded-s bg-accent text-md font-medium text-accent-ink hover:bg-accent-hover"
           >
-            Sign In
+            Sign in
           </button>
         </form>
 
-        <p className="mt-5 text-center text-xs text-soft">
-          Mock auth — any credentials work. You land with full <span className="text-ink">Admin</span> access.
+        <p className="mt-6 text-xs text-muted">
+          Demo authentication — any credentials work. The switcher in the corner
+          previews each persona once you're in.
         </p>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

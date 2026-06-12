@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: krysalis
+      POSTGRES_PASSWORD: krysalis
+      POSTGRES_DB: krysalis
+    ports:
+      - "5432:5432"
+    volumes:
+      - krysalis-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U krysalis -d krysalis"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  krysalis-pgdata:

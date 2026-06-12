@@ -1,32 +1,39 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Newsreader, Schibsted_Grotesk, Spline_Sans_Mono } from "next/font/google";
 import "./globals.css";
-import { AppProvider } from "@/lib/state";
-import RoleSwitcher from "@/components/RoleSwitcher";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const grotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-grotesk" });
+const ui = Schibsted_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-ui",
+});
+
+const mono = Spline_Sans_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+});
+
+const serif = Newsreader({
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  variable: "--font-serif",
+});
 
 export const metadata: Metadata = {
   title: "Krysalis OS",
-  description: "Krysalis Agentic OS — unified employee hub & client platform.",
+  description: "The internal operating system of the Krysalis firm.",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1A2E22",
+  themeColor: "#0C100D",
   width: "device-width",
   initialScale: 1,
-  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${grotesk.variable} font-sans antialiased`}>
-        <AppProvider>
-          {children}
-          <RoleSwitcher />
-        </AppProvider>
+      <body className={`${ui.variable} ${mono.variable} ${serif.variable}`}>
+        {children}
       </body>
     </html>
   );

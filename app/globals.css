@@ -1,171 +1,331 @@
 @import "tailwindcss";
 
 /*
-  Krysalis OS theme system.
-  Every component consumes ONLY these tokens (via the Tailwind utilities
-  mapped below) — no hardcoded colors — so flipping the scope class on the
-  root container re-themes the whole app in one 500ms transition.
+  Krysalis OS — the Field Guide token system (PRD section 5).
+
+  Both scopes define the same token names; components never know which theme
+  they are in. The employee hub is Metapod (dark, digital forest); the client
+  portal is Butterfree (light, tech lavender). Identity — and therefore the
+  scope class — is resolved on the server (PRD section 6); the only client-side
+  theme switch is the login-page preview toggle.
 */
 
 :root {
-  /* defaults = employee theme, so body/overscroll match before hydration */
-  --bg-primary: #1a2e22;
-  --bg-secondary: #243f2f;
-  --accent-primary: #a6b91a;
-  --accent-glow: #7ac74c;
-  --accent-highlight: #e5484d;
-  --text-main: #f4fbf7;
-  --text-muted: #8aa495;
+  /* Defaults mirror Metapod so the body paints correctly before any scope
+     class applies (overscroll, route transitions). */
+  --color-bg-base: #0c100d;
+  --color-bg-surface: #121813;
+  --color-bg-raised: #1a211b;
+  --color-bg-inset: #090c0a;
+  --color-line: #222c24;
+  --color-line-strong: #33402f;
+  --color-text-primary: #e8ede4;
+  --color-text-secondary: #a6b2a1;
+  --color-text-muted: #6e7b6c;
+  --color-accent: #a9c46b;
+  --color-accent-hover: #bcd482;
+  --color-accent-ink: #131a0d;
+  --color-accent-soft: #a9c46b1f;
+  --color-ok: #79bd8a;
+  --color-warn: #d7a45c;
+  --color-danger: #d67a64;
+  --color-info: #76a8b8;
+  --color-gold: #d2b45f;
+  --shadow-raise: none;
 }
 
-/* Theme A — Internal Employee Hub ("Metapod") */
+/* Metapod — the interior of the chrysalis. Lines, not shadows, structure it. */
 .theme-employee {
-  --bg-primary: #1a2e22;
-  --bg-secondary: #243f2f;
-  --accent-primary: #a6b91a;
-  --accent-glow: #7ac74c;
-  --accent-highlight: #e5484d; /* red-leaning danger treatment for this theme */
-  --text-main: #f4fbf7;
-  --text-muted: #8aa495;
+  --color-bg-base: #0c100d;
+  --color-bg-surface: #121813;
+  --color-bg-raised: #1a211b;
+  --color-bg-inset: #090c0a;
+  --color-line: #222c24;
+  --color-line-strong: #33402f;
+  --color-text-primary: #e8ede4;
+  --color-text-secondary: #a6b2a1;
+  --color-text-muted: #6e7b6c;
+  --color-accent: #a9c46b;
+  --color-accent-hover: #bcd482;
+  --color-accent-ink: #131a0d;
+  --color-accent-soft: #a9c46b1f;
+  --color-ok: #79bd8a;
+  --color-warn: #d7a45c;
+  --color-danger: #d67a64;
+  --color-info: #76a8b8;
+  --color-gold: #d2b45f;
+  --shadow-raise: none;
 }
 
-/* Theme B — External Client Hub ("Butterfree") */
+/* Butterfree — the emergence. Porcelain, lavender used flat, one soft shadow. */
 .theme-client {
-  --bg-primary: #0f0e17;
-  --bg-secondary: #3d354e;
-  --accent-primary: #85a5ff;
-  --accent-glow: #85a5ff;
-  --accent-highlight: #ff4d4f;
-  --text-main: #ffffff;
-  --text-muted: #b3a9c9;
+  --color-bg-base: #f6f4fa;
+  --color-bg-surface: #fcfbfe;
+  --color-bg-raised: #ffffff;
+  --color-bg-inset: #efebf6;
+  --color-line: #e4def0;
+  --color-line-strong: #cfc6e3;
+  --color-text-primary: #241d38;
+  --color-text-secondary: #5b5274;
+  --color-text-muted: #8d84a6;
+  --color-accent: #6a58cf;
+  --color-accent-hover: #5947bd;
+  --color-accent-ink: #ffffff;
+  --color-accent-soft: #6a58cf14;
+  --color-ok: #3f8f63;
+  --color-warn: #a97b22;
+  --color-danger: #b65a4c;
+  --color-info: #46789e;
+  --color-gold: #9c7f2e;
+  --shadow-raise:
+    0 1px 2px rgba(36, 29, 56, 0.06),
+    0 10px 28px rgba(36, 29, 56, 0.08);
 }
 
 @theme inline {
-  --color-canvas: var(--bg-primary);
-  --color-surface: var(--bg-secondary);
-  --color-accent: var(--accent-primary);
-  --color-glow: var(--accent-glow);
-  --color-alert: var(--accent-highlight);
-  --color-ink: var(--text-main);
-  --color-soft: var(--text-muted);
+  /* Wipe the stock palette so bg-slate-900 and friends fail to compile
+     (PRD 5.1.3 enforced by the build, not by review). */
+  --color-*: initial;
+  --color-base: var(--color-bg-base);
+  --color-surface: var(--color-bg-surface);
+  --color-raised: var(--color-bg-raised);
+  --color-inset: var(--color-bg-inset);
+  --color-line: var(--color-line);
+  --color-line-strong: var(--color-line-strong);
+  --color-primary: var(--color-text-primary);
+  --color-secondary: var(--color-text-secondary);
+  --color-muted: var(--color-text-muted);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-ink: var(--color-accent-ink);
+  --color-accent-soft: var(--color-accent-soft);
+  --color-ok: var(--color-ok);
+  --color-warn: var(--color-warn);
+  --color-danger: var(--color-danger);
+  --color-info: var(--color-info);
+  --color-gold: var(--color-gold);
+  --color-transparent: transparent;
+  --color-current: currentColor;
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-grotesk), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  /* The three faces (PRD 5.3), loaded in app/layout.tsx via next/font. */
+  --font-*: initial;
+  --font-ui: var(--font-ui);
+  --font-mono: var(--font-mono);
+  --font-serif: var(--font-serif);
+
+  /* Type scale (rem): 0.75 / 0.8125 / 0.875 / 1 / 1.25 / 1.625 / 2.25,
+     plus the 0.6875 eyebrow size. Nothing off-scale compiles. */
+  --text-*: initial;
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.125rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.25rem;
+  --text-md: 0.875rem;
+  --text-md--line-height: 1.375rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.625rem;
+  --text-lg: 1.25rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.625rem;
+  --text-xl--line-height: 2.125rem;
+  --text-2xl: 2.25rem;
+  --text-2xl--line-height: 2.625rem;
+
+  /* One radius scale (PRD 5.4). rounded-full stays for pills and badges. */
+  --radius-*: initial;
+  --radius-s: 4px;
+  --radius-m: 8px;
+  --radius-l: 12px;
+
+  --shadow-*: initial;
+  --shadow-raise: var(--shadow-raise);
+
+  /* Motion (PRD 5.5): 140ms press, 220ms panel, 500ms theme crossfade. */
+  --ease-*: initial;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
 }
 
 @layer base {
-  /* Theme switches animate color-ish properties everywhere (PRD §1).
-     Utilities (transition-all etc.) live in a later layer and override this
-     for elements that need their own snappier transitions. */
-  *,
-  *::before,
-  *::after {
-    transition-property: background-color, border-color, color, fill, stroke;
-    transition-duration: 500ms;
-    transition-timing-function: ease;
-  }
-
   html,
   body {
     height: 100%;
   }
 
   body {
-    background-color: var(--bg-primary);
-    color: var(--text-main);
+    background-color: var(--color-bg-base);
+    color: var(--color-text-primary);
+    font-family: var(--font-ui), ui-sans-serif, sans-serif;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
   }
 
-  /* Accessibility: visible accent focus rings */
+  ::selection {
+    background-color: var(--color-accent);
+    color: var(--color-accent-ink);
+  }
+
   :focus-visible {
-    outline: 2px solid var(--accent-primary);
+    outline: 2px solid var(--color-accent);
     outline-offset: 2px;
-    border-radius: 4px;
+    border-radius: var(--radius-s);
   }
 
   button:not(:disabled) {
     cursor: pointer;
   }
 
-  /* Inputs ≥16px so iOS doesn't zoom on focus */
-  input,
-  textarea,
-  select {
-    font-size: 16px;
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family: var(--font-mono), ui-monospace, monospace;
   }
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: color-mix(in srgb, var(--text-muted) 35%, transparent) transparent;
+    scrollbar-color: var(--color-line-strong) transparent;
   }
 }
 
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
+@layer components {
+  /* The eyebrow — the structural signature (PRD 5.3). Captions every panel
+     like a specimen label: "OPEN POSTINGS", "WORKER POOL", "FIELD NOTES". */
+  .eyebrow {
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
   }
-  to {
-    opacity: 1;
-    transform: none;
+
+  /* Mono figures: money, XP, counts, timestamps (PRD 5.3, 5.8). */
+  .figure {
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Editorial prose — Newsreader. Guide, lessons, job descriptions only. */
+  .prose-serif {
+    font-family: var(--font-serif), ui-serif, serif;
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+  .prose-serif h1,
+  .prose-serif h2,
+  .prose-serif h3 {
+    font-family: var(--font-ui), ui-sans-serif, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-block: 1.25em 0.5em;
+  }
+  .prose-serif h1 {
+    font-size: 1.25rem;
+  }
+  .prose-serif h2 {
+    font-size: 1rem;
+  }
+  .prose-serif h3 {
+    font-size: 0.875rem;
+  }
+  .prose-serif p {
+    margin-block: 0.75em;
+  }
+  .prose-serif ul,
+  .prose-serif ol {
+    margin-block: 0.75em;
+    padding-inline-start: 1.5em;
+  }
+  .prose-serif ul {
+    list-style: disc;
+  }
+  .prose-serif ol {
+    list-style: decimal;
+  }
+  .prose-serif li {
+    margin-block: 0.25em;
+  }
+  .prose-serif a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .prose-serif blockquote {
+    border-inline-start: 2px solid var(--color-line-strong);
+    padding-inline-start: 1em;
+    color: var(--color-text-secondary);
+    font-style: italic;
+    margin-block: 1em;
+  }
+  .prose-serif code {
+    font-size: 0.8125rem;
+    background-color: var(--color-bg-inset);
+    border-radius: var(--radius-s);
+    padding: 0.1em 0.35em;
+  }
+  .prose-serif hr {
+    border: 0;
+    border-top: 1px solid var(--color-line);
+    margin-block: 1.5em;
+  }
+
+  /* Signature element 1 — canopy grain (PRD 5.9). Mounted once in the
+     employee layout. SVG feTurbulence noise at 2.5% plus a barely-there
+     corner darkening; the one allowed gradient-adjacent dark treatment. */
+  .canopy-grain {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 50;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .canopy-vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 50;
+    background: radial-gradient(
+      ellipse 120% 95% at 50% 40%,
+      transparent 62%,
+      rgba(5, 8, 6, 0.28) 100%
+    );
+  }
+
+  /* Signature element 2 — wing hairline (PRD 5.9). The single 1px rule under
+     the portal masthead; the one gradient in the product. */
+  .wing-hairline {
+    height: 1px;
+    border: 0;
+    background: linear-gradient(
+      90deg,
+      #9a8fd6 0%,
+      #7fb3b8 38%,
+      #b495ba 72%,
+      #cdb1a8 100%
+    );
+  }
+
+  /* Theme crossfade (PRD 5.5) — login-page preview toggle only. Everything
+     else resolves its theme on the server and never transitions colors. */
+  .theme-fade,
+  .theme-fade * {
+    transition-property: background-color, border-color, color, fill, stroke,
+      box-shadow;
+    transition-duration: 500ms;
+    transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
   }
 }
 
-@keyframes dotpulse {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.45;
-    transform: scale(0.7);
-  }
-}
-
-@keyframes glowpulse {
-  0%,
-  100% {
-    box-shadow: 0 0 6px 0 color-mix(in srgb, var(--accent-glow) 35%, transparent);
-  }
-  50% {
-    box-shadow: 0 0 16px 3px color-mix(in srgb, var(--accent-glow) 65%, transparent);
-  }
-}
-
-/* Tab/view content transition (fade + slide, no layout jank) */
-@utility animate-rise {
-  animation: rise 0.3s ease both;
-}
-
-/* Non-human marker: 2px glow ring + soft outer shadow (PRD §5 Pattern 1) */
-@utility agent-glow {
-  box-shadow: 0 0 12px 1px color-mix(in srgb, var(--accent-glow) 45%, transparent);
-}
-
-@utility agent-glow-pulse {
-  animation: glowpulse 1.8s ease-in-out infinite;
-}
-
-@utility animate-dotpulse {
-  animation: dotpulse 1.2s ease-in-out infinite;
-}
-
-/* Card micro-interaction: hover scale + accent border-glow; pressed state on touch */
-@utility card-pop {
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.3s ease,
-    border-color 0.3s ease,
-    background-color 0.5s ease,
-    color 0.5s ease;
-  @media (hover: hover) {
-    &:hover {
-      transform: scale(1.01);
-      border-color: color-mix(in srgb, var(--accent-glow) 60%, transparent);
-      box-shadow: 0 0 18px -4px color-mix(in srgb, var(--accent-glow) 40%, transparent);
-    }
-  }
-  &:active {
-    transform: scale(0.99);
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

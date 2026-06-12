@@ -1,0 +1,20 @@
+import type { MockVaultAsset } from "./types";
+
+/** ~14 assets with real filenames, most linked to jobs, 5 in the Commons
+ *  (PRD section 10). URLs are external placeholders; storage is V3. */
+export const VAULT_ASSETS: MockVaultAsset[] = [
+  { id: "v-tidegate-kickoff", title: "Tidegate intake, kickoff summary", fileType: "doc", fileUrl: "https://files.krysalis.studio/tidegate/kickoff-summary.docx", sizeKb: 84, isSharedSocial: true, uploadedById: "u-priya", jobId: "j-tidegate-claims-intake", createdAt: "2026-06-02" },
+  { id: "v-tidegate-formats", title: "Tidegate carrier formats, field map", fileType: "sheet", fileUrl: "https://files.krysalis.studio/tidegate/carrier-field-map.xlsx", sizeKb: 132, isSharedSocial: false, uploadedById: "u-priya", jobId: "j-tidegate-claims-intake", createdAt: "2026-06-09" },
+  { id: "v-tidegate-queue", title: "Exception queue, first cut", fileType: "image", fileUrl: "https://files.krysalis.studio/tidegate/exception-queue-v1.png", sizeKb: 940, isSharedSocial: false, uploadedById: "u-marcus", jobId: "j-tidegate-claims-intake", createdAt: "2026-06-10" },
+  { id: "v-fernwell-collateral", title: "Fernwell collateral set, final", fileType: "figma", fileUrl: "https://figma.com/file/fernwell-collateral-final", isSharedSocial: false, uploadedById: "u-june", jobId: "j-fernwell-brand-refresh", createdAt: "2026-06-09" },
+  { id: "v-fernwell-templates", title: "Fernwell Word templates, round-trip tested", fileType: "doc", fileUrl: "https://files.krysalis.studio/fernwell/templates-pack.docx", sizeKb: 412, isSharedSocial: false, uploadedById: "u-theo", jobId: "j-fernwell-brand-refresh", createdAt: "2026-06-09" },
+  { id: "v-vargas-staging", title: "Vargas site, staging link", fileType: "link", fileUrl: "https://staging.krysalis.studio/vargas", isSharedSocial: false, uploadedById: "u-june", jobId: "j-vargas-site", createdAt: "2026-06-11" },
+  { id: "v-northbeam-model", title: "Northbeam dispatch data model, phase one", fileType: "pdf", fileUrl: "https://files.krysalis.studio/northbeam/dispatch-data-model.pdf", sizeKb: 268, isSharedSocial: true, uploadedById: "u-priya", jobId: "j-northbeam-dispatch-1", createdAt: "2026-04-15" },
+  { id: "v-northbeam-handover", title: "Northbeam phase one, handover note", fileType: "doc", fileUrl: "https://files.krysalis.studio/northbeam/phase-one-handover.docx", sizeKb: 56, isSharedSocial: true, uploadedById: "u-owen", jobId: "j-northbeam-dispatch-1", createdAt: "2026-04-17" },
+  { id: "v-cassia-reminder-flows", title: "Cassia reminder pipeline, flow diagram", fileType: "pdf", fileUrl: "https://files.krysalis.studio/cassia/reminder-flows.pdf", sizeKb: 198, isSharedSocial: true, uploadedById: "u-daniel", jobId: "j-cassia-booking-reminders", createdAt: "2026-02-18" },
+  { id: "v-cassia-case-study", title: "Cassia case study, client-ready", fileType: "pdf", fileUrl: "https://files.krysalis.studio/cassia/case-study.pdf", sizeKb: 1240, isSharedSocial: true, uploadedById: "u-sara", jobId: "j-cassia-booking-reminders", createdAt: "2026-03-06" },
+  { id: "v-ratio-dunning", title: "Ratio dunning flow, copy deck", fileType: "doc", fileUrl: "https://files.krysalis.studio/ratio/dunning-copy.docx", sizeKb: 47, isSharedSocial: false, uploadedById: "u-camille", jobId: "j-ratio-subscription-emails", createdAt: "2026-05-30" },
+  { id: "v-ratio-results", title: "Ratio email flows, first-window results", fileType: "sheet", fileUrl: "https://files.krysalis.studio/ratio/flow-results-w1.xlsx", sizeKb: 88, isSharedSocial: false, uploadedById: "u-rebecca", jobId: "j-ratio-subscription-emails", createdAt: "2026-06-09" },
+  { id: "v-tidegate-letters", title: "Tidegate quote-letter masters", fileType: "doc", fileUrl: "https://files.krysalis.studio/tidegate/quote-letter-masters.docx", sizeKb: 310, isSharedSocial: false, uploadedById: "u-aiko", jobId: "j-tidegate-quote-letters", createdAt: "2026-06-06" },
+  { id: "v-gate-audit", title: "Gate content audit, June", fileType: "sheet", fileUrl: "https://files.krysalis.studio/internal/gate-content-audit-jun.xlsx", sizeKb: 73, isSharedSocial: false, uploadedById: "u-dmitri", createdAt: "2026-06-11" },
+];

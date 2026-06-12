@@ -1,75 +1,63 @@
 "use client";
 
-import { useState } from "react";
-import { useApp } from "@/lib/state";
-import type { PortalMode, Role } from "@/lib/types";
-
-const ROLES: { id: Role; label: string; icon: string }[] = [
-  { id: "admin", label: "Admin", icon: "👑" },
-  { id: "moderator", label: "Moderator", icon: "🛡" },
-  { id: "employee", label: "Employee", icon: "🌿" },
-  { id: "client", label: "Client", icon: "🦋" },
-];
+import { useState, useTransition } from "react";
+import { ChevronUp, UserRound } from "lucide-react";
+import clsx from "clsx";
+import { switchPersona } from "@/app/actions/auth";
+import { PERSONAS } from "@/lib/personas";
 
 /**
- * Demo-only floating pill (PRD §2): previews the UI as any role without a
- * real auth backend, plus a live Employee/Client theme toggle.
+ * Demo role-switcher pill (PRD 7.10): swaps the persona cookie between the
+ * five seeded personas — the live three-way pivot in two clicks.
  */
-export default function RoleSwitcher() {
-  const { state, dispatch } = useApp();
+export default function RoleSwitcher({ activeId }: { activeId: string }) {
   const [open, setOpen] = useState(false);
-  const current = ROLES.find((r) => r.id === state.role) ?? ROLES[0];
+  const [pending, startTransition] = useTransition();
+  const active = PERSONAS.find((p) => p.id === activeId);
 
   return (
-    <div className="fixed bottom-3 left-3 z-50 flex flex-col items-start gap-2 pb-[env(safe-area-inset-bottom)]">
+    <div className="fixed bottom-3 left-3 z-50 flex flex-col items-start gap-2">
       {open && (
-        <div className="animate-rise w-52 rounded-2xl border border-ink/15 bg-surface/95 p-2 shadow-2xl backdrop-blur-md">
-          <p className="px-2 pb-1 pt-0.5 text-[10px] font-semibold uppercase tracking-widest text-soft">
-            Preview as role
-          </p>
-          {ROLES.map((r) => (
+        <div
+          className="w-64 rounded-m border border-line bg-raised p-1.5"
+          style={{ boxShadow: "var(--shadow-raise)" }}
+        >
+          <p className="eyebrow px-2 pb-1 pt-1">Preview as</p>
+          {PERSONAS.map((p) => (
             <button
-              key={r.id}
+              key={p.id}
+              disabled={pending}
               onClick={() => {
-                dispatch({ type: "role", role: r.id });
                 setOpen(false);
+                startTransition(() => switchPersona(p.id));
               }}
-              className={`flex min-h-11 w-full items-center gap-2.5 rounded-xl px-3 text-sm transition-colors ${
-                state.role === r.id ? "bg-accent/20 text-ink" : "text-soft hover:bg-ink/5 hover:text-ink"
-              }`}
+              className={clsx(
+                "flex w-full flex-col items-start rounded-s px-2 py-1.5 text-left",
+                p.id === activeId
+                  ? "bg-accent-soft text-primary"
+                  : "text-secondary hover:bg-inset hover:text-primary",
+              )}
             >
-              <span aria-hidden>{r.icon}</span>
-              {r.label}
-              {state.role === r.id && <span className="ml-auto text-accent">●</span>}
+              <span className="text-sm font-medium">{p.name}</span>
+              <span className="figure text-2xs text-muted">{p.caption}</span>
             </button>
           ))}
-          <div className="my-1.5 border-t border-ink/10" />
-          <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-widest text-soft">Theme</p>
-          <div className="flex gap-1.5 px-1 pb-1">
-            {(["employee", "client"] as PortalMode[]).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => dispatch({ type: "portal", mode })}
-                className={`min-h-11 flex-1 rounded-xl border text-xs font-medium capitalize transition-colors ${
-                  state.portalMode === mode
-                    ? "border-accent/60 bg-accent/20 text-ink"
-                    : "border-ink/10 text-soft hover:text-ink"
-                }`}
-              >
-                {mode === "employee" ? "🌿 Employee" : "🦋 Client"}
-              </button>
-            ))}
-          </div>
         </div>
       )}
       <button
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex min-h-11 items-center gap-2 rounded-full border border-ink/15 bg-surface/95 px-4 text-sm font-medium text-ink shadow-xl backdrop-blur-md transition-transform active:scale-95"
+        className="flex items-center gap-2 rounded-full border border-line bg-raised py-1.5 pl-3 pr-2.5 text-sm text-primary"
+        style={{ boxShadow: "var(--shadow-raise)" }}
       >
-        <span aria-hidden>{current.icon}</span>
-        <span className="capitalize">{current.label}</span>
-        <span className="text-[10px] text-soft">{open ? "▾" : "▴"}</span>
+        <UserRound size={16} strokeWidth={1.5} aria-hidden />
+        <span>{pending ? "Switching" : (active?.name ?? "Choose persona")}</span>
+        <ChevronUp
+          size={16}
+          strokeWidth={1.5}
+          aria-hidden
+          className={clsx("text-muted transition-transform duration-220", open && "rotate-180")}
+        />
       </button>
     </div>
   );
