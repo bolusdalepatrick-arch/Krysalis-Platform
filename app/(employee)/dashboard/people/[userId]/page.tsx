@@ -1,12 +1,16 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Eyebrow from "@/components/Eyebrow";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
+import MessageButton from "@/components/channels/MessageButton";
+import { getSessionUser } from "@/lib/auth";
 import { formatDate, formatMoney } from "@/lib/format";
 import { profile } from "@/lib/queries/people";
 import { JOB_STATUS_LABEL, JOB_STATUS_TONE } from "@/components/jobStatus";
 import type { JobStatus } from "@prisma/client";
+
+const EMPLOYEE_SIDE = ["EMPLOYEE", "MODERATOR", "ADMIN"];
 
 /** Profile and performance record (PRD 7.2): tier, XP, earnings, completed
  *  work, courses finished, and the reverse-chrono ledger — every figure
@@ -17,10 +21,16 @@ export default async function PersonPage({
   params: Promise<{ userId: string }>;
 }) {
   const { userId } = await params;
+  const viewer = await getSessionUser();
+  if (!viewer) redirect("/login");
   const person = await profile(userId);
   if (!person) notFound();
 
   const isClient = person.role === "CLIENT";
+  const canDm =
+    person.id !== viewer.id &&
+    EMPLOYEE_SIDE.includes(viewer.role) &&
+    EMPLOYEE_SIDE.includes(person.role);
 
   return (
     <div>
@@ -29,9 +39,12 @@ export default async function PersonPage({
         title={person.name}
         meta={person.title ?? undefined}
         actions={
-          !isClient ? (
-            <StatusBadge tone="gold">{`Tier ${person.tierLevel} — ${person.tierName}`}</StatusBadge>
-          ) : undefined
+          <>
+            {canDm ? <MessageButton userId={person.id} /> : null}
+            {!isClient ? (
+              <StatusBadge tone="gold">{`Tier ${person.tierLevel} — ${person.tierName}`}</StatusBadge>
+            ) : null}
+          </>
         }
       />
       <div className="max-w-3xl space-y-8 px-6 py-6">

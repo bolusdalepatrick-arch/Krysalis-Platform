@@ -18,6 +18,8 @@ import clsx from "clsx";
 export interface RailChannelItem {
   href: string;
   label: string;
+  /** Completed jobs' channels read archived (PRD 7.3): muted label. */
+  archived?: boolean;
 }
 
 export interface RailData {
@@ -27,6 +29,7 @@ export interface RailData {
   departments: RailChannelItem[];
   jobs: RailChannelItem[];
   clients: RailChannelItem[];
+  direct: RailChannelItem[];
 }
 
 const TOP_NAV = [
@@ -101,7 +104,8 @@ function ChannelGroup({
             )}
           >
             {hash ? <Hash size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" /> : null}
-            <span className="truncate">{c.label}</span>
+            <span className={clsx("truncate", c.archived && "text-muted")}>{c.label}</span>
+            {c.archived ? <span className="figure ml-auto shrink-0 text-2xs text-muted">archived</span> : null}
           </Link>
         );
       })}
@@ -144,6 +148,7 @@ export default function Rail({ data }: { data: RailData }) {
         <ChannelGroup title="Channels" items={data.departments} pathname={pathname} hash />
         <ChannelGroup title="Active jobs" items={data.jobs} pathname={pathname} hash />
         <ChannelGroup title="Clients" items={data.clients} pathname={pathname} />
+        <ChannelGroup title="Direct" items={data.direct} pathname={pathname} />
 
         <div className="mt-4 border-t border-line pt-3">
           {BOTTOM_NAV.map((item) => (

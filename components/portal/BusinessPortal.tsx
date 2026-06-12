@@ -1,11 +1,10 @@
 import AvatarBadge from "@/components/AvatarBadge";
 import Eyebrow from "@/components/Eyebrow";
-import AccountThread from "@/components/portal/AccountThread";
 import EngagementsTable from "@/components/portal/EngagementsTable";
 import StartHerePanel from "@/components/portal/StartHerePanel";
 import { formatMoney } from "@/lib/format";
 import { DEALS, personById } from "@/lib/mock";
-import type { MockAccount, MockJob, MockMessage, MockPerson } from "@/lib/mock";
+import type { MockAccount, MockJob, MockPerson } from "@/lib/mock";
 
 const MANAGING_DIRECTOR_ID = "u-mara";
 
@@ -24,11 +23,11 @@ function accountContact(accountId: string): MockPerson | undefined {
 export default function BusinessPortal({
   account,
   jobs,
-  messages,
+  thread,
 }: {
   account: MockAccount;
   jobs: MockJob[];
-  messages: MockMessage[];
+  thread: React.ReactNode;
 }) {
   const completed = jobs.filter((job) => job.status === "COMPLETED");
   const inFlight = jobs.filter((job) => job.status !== "COMPLETED");
@@ -73,7 +72,7 @@ export default function BusinessPortal({
 
       <EngagementsTable jobs={jobs} />
 
-      <AccountThread messages={messages} />
+      {thread}
 
       <StartHerePanel accountName={account.name} contactName={contact?.name ?? "Mara Voss"} />
     </div>

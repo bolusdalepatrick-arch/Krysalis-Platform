@@ -1,12 +1,18 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { canViewChannel, type ChannelFacts, type ChannelViewer } from "@/lib/channels";
+import {
+  canDecideShadowDraft,
+  canPostChannel,
+  canViewChannel,
+  type ChannelFacts,
+  type ChannelViewer,
+} from "@/lib/channels";
 
-/** Channel reads. The rail and the channel page moved to the database with
- *  M2 so the job channels the marketplace provisions are reachable; posting
- *  and polling arrive with M4. */
+/** Channel reads. Visibility, posting, and draft rights all derive from
+ *  lib/channels.ts; Shadow drafts are filtered out for viewers who cannot
+ *  decide them (PRD 7.3). */
 
-const channelInclude = {
+export const channelInclude = {
   department: { select: { id: true, name: true } },
   job: { select: { id: true, title: true, status: true, workers: { select: { memberId: true } } } },
   account: {
@@ -21,12 +27,12 @@ const channelInclude = {
       },
     },
   },
-  members: { select: { userId: true } },
+  members: { select: { userId: true, user: { select: { name: true } } } },
 } satisfies Prisma.ChannelInclude;
 
-type ChannelRow = Prisma.ChannelGetPayload<{ include: typeof channelInclude }>;
+export type ChannelRow = Prisma.ChannelGetPayload<{ include: typeof channelInclude }>;
 
-function toFacts(channel: ChannelRow): ChannelFacts {
+export function toFacts(channel: ChannelRow): ChannelFacts {
   return {
     kind: channel.kind,
     departmentId: channel.departmentId,
@@ -42,8 +48,10 @@ function toFacts(channel: ChannelRow): ChannelFacts {
 export interface RailGroups {
   firm: { href: string; label: string }[];
   departments: { href: string; label: string }[];
-  jobs: { href: string; label: string }[];
+  /** Completed jobs' channels stay listed but read archived (PRD 7.3). */
+  jobs: { href: string; label: string; archived?: boolean }[];
   clients: { href: string; label: string }[];
+  direct: { href: string; label: string }[];
 }
 
 export async function railChannels(viewer: ChannelViewer): Promise<RailGroups> {
@@ -56,11 +64,24 @@ export async function railChannels(viewer: ChannelViewer): Promise<RailGroups> {
     href: `/dashboard/channels/${channel.id}`,
     label: channel.kind === "ACCOUNT" ? (channel.account?.name ?? channel.name) : channel.name,
   });
+  // A DM is labeled with the other person's name (PRD section 8: "derived
+  // label for DMs").
+  const dmLink = (channel: ChannelRow) => ({
+    href: `/dashboard/channels/${channel.id}`,
+    label:
+      channel.members.find((m) => m.userId !== viewer.id)?.user.name ?? channel.name,
+  });
   return {
     firm: visible.filter((c) => c.kind === "FIRM").map(link),
     departments: visible.filter((c) => c.kind === "DEPARTMENT").map(link),
-    jobs: visible.filter((c) => c.kind === "JOB").map(link),
+    jobs: visible
+      .filter((c) => c.kind === "JOB")
+      .map((c) => ({ ...link(c), archived: c.job?.status === "COMPLETED" })),
     clients: visible.filter((c) => c.kind === "ACCOUNT").map(link),
+    direct: visible
+      .filter((c) => c.kind === "DM")
+      .map(dmLink)
+      .sort((a, b) => a.label.localeCompare(b.label)),
   };
 }
 
@@ -75,6 +96,8 @@ export interface MessageView {
   body: string;
   isShadowDraft: boolean;
   approvedById: string | null;
+  /** "Shadow · approved by {name}" attribution — muted, badge-free. */
+  approvedByName: string | null;
   createdAt: string;
   bookingCard: {
     id: string;
@@ -99,8 +122,69 @@ export interface ChannelPageData {
   departmentName: string | null;
   jobTitle: string | null;
   jobId: string | null;
+  jobStatus: string | null;
   accountName: string | null;
+  /** DM partner's name — the derived label (PRD section 8). */
+  dmPartnerName: string | null;
+  canPost: boolean;
+  /** "Draft update" affordance and draft action rights (PRD 7.3). */
+  canDecideDrafts: boolean;
   messages: MessageView[];
+}
+
+const messageInclude = {
+  sender: {
+    select: { id: true, name: true, isSystem: true, role: true, currentTierLevel: true },
+  },
+  bookingCard: { include: { claimedBy: { select: { name: true } } } },
+} satisfies Prisma.MessageInclude;
+
+type MessageRowData = Prisma.MessageGetPayload<{ include: typeof messageInclude }>;
+
+async function toMessageViews(rows: MessageRowData[]): Promise<MessageView[]> {
+  // approvedById is intentionally a display-only scalar (PRD section 8);
+  // resolve names in one batched lookup.
+  const approverIds = [...new Set(rows.map((m) => m.approvedById).filter((id): id is string => !!id))];
+  const approvers =
+    approverIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: approverIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+  const approverName = new Map(approvers.map((u) => [u.id, u.name]));
+
+  return rows.map((m) => ({
+    id: m.id,
+    senderId: m.sender.id,
+    senderName: m.sender.name,
+    senderIsSystem: m.sender.isSystem,
+    senderTier:
+      !m.sender.isSystem && m.sender.role !== "CLIENT" && m.sender.role !== "USER"
+        ? m.sender.currentTierLevel
+        : null,
+    body: m.body,
+    isShadowDraft: m.isShadowDraft,
+    approvedById: m.approvedById,
+    approvedByName: m.approvedById ? (approverName.get(m.approvedById) ?? null) : null,
+    createdAt: m.createdAt.toISOString(),
+    bookingCard: m.bookingCard
+      ? {
+          id: m.bookingCard.id,
+          externalRef: m.bookingCard.externalRef,
+          name: m.bookingCard.name,
+          company: m.bookingCard.company,
+          companySize: m.bookingCard.companySize,
+          automationGoal: m.bookingCard.automationGoal,
+          slotStart: m.bookingCard.slotStart.toISOString(),
+          slotEnd: m.bookingCard.slotEnd.toISOString(),
+          status: m.bookingCard.status,
+          claimedByName: m.bookingCard.claimedBy?.name ?? null,
+          claimedAt: m.bookingCard.claimedAt?.toISOString() ?? null,
+          submittedAt: m.bookingCard.submittedAt.toISOString(),
+        }
+      : null,
+  }));
 }
 
 export async function channelPage(
@@ -112,16 +196,13 @@ export async function channelPage(
     include: channelInclude,
   });
   if (!channel) return null;
-  if (!canViewChannel(viewer, toFacts(channel))) return null;
+  const facts = toFacts(channel);
+  if (!canViewChannel(viewer, facts)) return null;
+  const decidesDrafts = canDecideShadowDraft(viewer, facts);
 
-  const messages = await prisma.message.findMany({
-    where: { channelId },
-    include: {
-      sender: {
-        select: { id: true, name: true, isSystem: true, role: true, currentTierLevel: true },
-      },
-      bookingCard: { include: { claimedBy: { select: { name: true } } } },
-    },
+  const rows = await prisma.message.findMany({
+    where: { channelId, ...(decidesDrafts ? {} : { isShadowDraft: false }) },
+    include: messageInclude,
     orderBy: { createdAt: "asc" },
   });
 
@@ -132,38 +213,46 @@ export async function channelPage(
     departmentName: channel.department?.name ?? null,
     jobTitle: channel.job?.title ?? null,
     jobId: channel.job?.id ?? null,
+    jobStatus: channel.job?.status ?? null,
     accountName: channel.account?.name ?? null,
-    messages: messages.map((m) => ({
-      id: m.id,
-      senderId: m.sender.id,
-      senderName: m.sender.name,
-      senderIsSystem: m.sender.isSystem,
-      senderTier:
-        !m.sender.isSystem && m.sender.role !== "CLIENT" && m.sender.role !== "USER"
-          ? m.sender.currentTierLevel
-          : null,
-      body: m.body,
-      isShadowDraft: m.isShadowDraft,
-      approvedById: m.approvedById,
-      createdAt: m.createdAt.toISOString(),
-      bookingCard: m.bookingCard
-        ? {
-            id: m.bookingCard.id,
-            externalRef: m.bookingCard.externalRef,
-            name: m.bookingCard.name,
-            company: m.bookingCard.company,
-            companySize: m.bookingCard.companySize,
-            automationGoal: m.bookingCard.automationGoal,
-            slotStart: m.bookingCard.slotStart.toISOString(),
-            slotEnd: m.bookingCard.slotEnd.toISOString(),
-            status: m.bookingCard.status,
-            claimedByName: m.bookingCard.claimedBy?.name ?? null,
-            claimedAt: m.bookingCard.claimedAt?.toISOString() ?? null,
-            submittedAt: m.bookingCard.submittedAt.toISOString(),
-          }
+    dmPartnerName:
+      channel.kind === "DM"
+        ? (channel.members.find((m) => m.userId !== viewer.id)?.user.name ?? null)
         : null,
-    })),
+    canPost: canPostChannel(viewer, facts),
+    canDecideDrafts: decidesDrafts,
+    messages: await toMessageViews(rows),
   };
+}
+
+/** The 5-second poll's read (PRD 7.3): messages at or after the cursor in
+ *  a channel the viewer can see, drafts filtered by draft rights. The
+ *  client dedupes by id, so the >= overlap is safe. */
+export async function messagesAfter(
+  channelId: string,
+  afterIso: string,
+  viewer: ChannelViewer,
+): Promise<MessageView[] | null> {
+  const channel = await prisma.channel.findUnique({
+    where: { id: channelId },
+    include: channelInclude,
+  });
+  if (!channel) return null;
+  const facts = toFacts(channel);
+  if (!canViewChannel(viewer, facts)) return null;
+  const decidesDrafts = canDecideShadowDraft(viewer, facts);
+
+  const rows = await prisma.message.findMany({
+    where: {
+      channelId,
+      createdAt: { gte: new Date(afterIso) },
+      ...(decidesDrafts ? {} : { isShadowDraft: false }),
+    },
+    include: messageInclude,
+    orderBy: { createdAt: "asc" },
+    take: 200,
+  });
+  return toMessageViews(rows);
 }
 
 /** The Today view's RECENT ACTIVITY block: the latest non-draft messages
@@ -220,20 +309,11 @@ export async function pendingDrafts(
 ): Promise<{ id: string; channelId: string; channelName: string; body: string }[]> {
   const drafts = await prisma.message.findMany({
     where: { isShadowDraft: true },
-    include: {
-      channel: {
-        select: { id: true, name: true, job: { select: { workers: { select: { memberId: true } } } } },
-      },
-    },
+    include: { channel: { include: channelInclude } },
     orderBy: { createdAt: "desc" },
   });
-  const canApproveAll = viewer.role === "ADMIN" || viewer.role === "MODERATOR";
   return drafts
-    .filter(
-      (m) =>
-        canApproveAll ||
-        (m.channel.job?.workers ?? []).some((w) => w.memberId === viewer.id),
-    )
+    .filter((m) => canDecideShadowDraft(viewer, toFacts(m.channel)))
     .map((m) => ({
       id: m.id,
       channelId: m.channel.id,

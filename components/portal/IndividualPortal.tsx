@@ -1,10 +1,9 @@
 import Eyebrow from "@/components/Eyebrow";
-import AccountThread from "@/components/portal/AccountThread";
 import SetupStrip from "@/components/portal/SetupStrip";
 import { sharedAssetsFor } from "@/components/portal/SharedAssets";
 import { formatDate, formatMoney } from "@/lib/format";
 import { CLIENT_STATUS_LABEL } from "@/lib/mock";
-import type { MockJob, MockMessage } from "@/lib/mock";
+import type { MockJob } from "@/lib/mock";
 
 /**
  * The individual composition (PRD 7.8): the setup strip, one engagement card
@@ -13,10 +12,10 @@ import type { MockJob, MockMessage } from "@/lib/mock";
  */
 export default function IndividualPortal({
   jobs,
-  messages,
+  thread,
 }: {
   jobs: MockJob[];
-  messages: MockMessage[];
+  thread: React.ReactNode;
 }) {
   const job = jobs[0];
   const delivered = job ? sharedAssetsFor([job]) : [];
@@ -73,7 +72,7 @@ export default function IndividualPortal({
         </p>
       )}
 
-      <AccountThread messages={messages} />
+      {thread}
     </div>
   );
 }

@@ -223,7 +223,11 @@ accident:
 | Mark a deal won / lost | own deals | own deals | any deal | no | no |
 | Convert a won deal (provision portal user, draft job) | no | no | yes | no | no |
 | Add employees (starts their onboarding) | no | no | yes | no | no |
-| Post in account threads | owned accounts | owned accounts | any | own account only | no |
+| Post in account threads | owned accounts + accounts whose active jobs they work | same | any | own account only | no |
+
+(The account-thread row carries the post-M1 membership ruling — posting is
+membership, and the seeded narrative's worker replies stand; alignment
+applied post-M4, flagged in the M4 report.)
 `USER` is a parked default for accounts not yet provisioned; they see a single
 "awaiting assignment" screen. `MODERATOR` is an employee with content-editing
 duties. Authorization is checked inside every Server Action (never only in the UI)
@@ -459,7 +463,8 @@ sub-list), Forum, Vault, Graph, Leaderboards. While a user's onboarding is
 incomplete, a "First week" entry with a progress count ("2 of 3") sits at the
 very top. Department channels nest under a "CHANNELS" eyebrow; job channels
 under "ACTIVE JOBS"; `#new-business` sits alone under "FIRM"; account threads
-the viewer can see nest under "CLIENTS".
+the viewer can see nest under "CLIENTS"; the viewer's DMs nest under a
+"DIRECT" eyebrow (ruling, post-M3).
 **The Today view is the command center** the latest draft sketched as a
 split-pane — delivered instead as one composed page of dense blocks, each
 linking into its deep route: the date line, OPEN WORK (postings in the viewer's
@@ -510,7 +515,10 @@ and the viewer's progress as a thin token-colored bar (no rings, no donuts).
 outline with per-lesson completion ticks. Center: lesson title, serif markdown
 body, optional asset link, and one button — "Mark lesson complete" → becomes
 "Completed Jun 12" (muted, with tick). Completion is idempotent via
-`LessonCompletion`; the course's `Enrollment.progressPct` is recomputed from
+`LessonCompletion` and upserts the `Enrollment` (the first-week checklist
+counts one completed lesson as being in the course, 7.13; `enrollInCourse`
+remains the explicit path — ruling, post-M3); the course's
+`Enrollment.progressPct` is recomputed from
 completions, and finishing the last lesson also writes `COURSE_COMPLETED`.
 **XP and tiers** (constants in `lib/xp.ts`, single source of truth):
 | Event | XP |
@@ -529,7 +537,9 @@ completions, and finishing the last lesson also writes `COURSE_COMPLETED`.
 | 3 | Chrysalis | 750 |
 | 4 | Eclosion | 1,500 |
 | 5 | Imago | 3,000 |
-Tier names render as small mono badges next to names (gold token). On tier-up,
+Tier names render as small mono badges next to names of people acting —
+senders, bidders, workers, profiles — never inside muted metadata lines such
+as "Shadow · approved by" or "Claimed by" (ruling, post-M3). On tier-up,
 show a quiet toast ("Tier 3 — Chrysalis") — no confetti, no modal.
 **Profile / performance record** (`/dashboard/people/[userId]`): tier, XP,
 earnings, completed jobs (with clients), courses finished, and a reverse-chrono
@@ -537,14 +547,18 @@ ledger from `XpEvent`. This page is what the leaderboards link into.
 ### 7.3 Channels and the Shadow
 Channel kinds: DEPARTMENT (one per department, created in seed), JOB (created
 automatically when a job becomes ASSIGNED, archived visually when COMPLETED),
-DM (explicit `ChannelMember` rows), FIRM (firm-wide; membership derived as
+DM (explicit `ChannelMember` rows; created by `startDm` — find-or-create on
+the unique employee pair, no group DMs in V2 — surfaced as one "Message"
+affordance on the profile page; ruling, post-M3), FIRM (firm-wide; membership
+derived as
 every EMPLOYEE/MODERATOR/ADMIN), and ACCOUNT (one per ACTIVE account, created
 at conversion — the client-facing thread, 7.8; membership derived as the
 account's portal users + the owning employee + workers on the account's
 non-COMPLETED jobs + admins — ruling, post-M1). One FIRM channel ships
 in V2: `#new-business`, home of the Bounty Board (7.12) — booking cards render
 inline there as structured messages. Membership for DEPARTMENT/JOB is likewise
-derived (department members; assigned workers + admins). ACCOUNT threads list
+derived (department members; assigned workers + moderators + admins, per the
+section 4 matrix — alignment ruling, post-M3). ACCOUNT threads list
 on the employee rail under a "CLIENTS" eyebrow for their owner and admins, and
 render inside the portal for clients; they are the only channels a CLIENT can
 see or post in.
@@ -565,10 +579,12 @@ machine, not a chat gimmick:
   The build must never require the key.
 Flow: in a JOB channel, workers see a "Draft update" affordance → action creates a
 `Message` with `isShadowDraft: true`, sender = the seeded Shadow system user.
-Drafts render inset with the chrysalis glyph, visible only to job workers/admins,
-with Approve / Edit / Discard. Approving stamps `approvedById`, clears the draft
+Drafts render inset with the chrysalis glyph, visible only to that job's
+workers, moderators, and admins (the section 4 matrix — alignment ruling,
+post-M3), with Approve / Edit / Discard. Approving stamps `approvedById`,
+clears the draft
 flag, and the message becomes visible to the channel, attributed "Shadow · approved
-by Daniel Okafor" in muted text. Discard deletes it.
+by Daniel Okafor" in muted text, badge-free (ruling, post-M3). Discard deletes it.
 "Agent Control" from V1 becomes the dashboard's "Pending drafts" block plus the
 per-channel affordance — not a separate fake-agent showcase.
 ### 7.4 Forum
@@ -1228,7 +1244,10 @@ type ActionResult<T = void> =
 Actions never throw to the client; they return `ok: false` with copy the UI can
 render verbatim. State-dependent mutations never read-then-write: guard with a
 conditional updateMany/deleteMany on the expected state and check the affected
-count — a transaction alone is not a guard (ruling, post-M2).
+count — a transaction alone is not a guard (ruling, post-M2). When the guard is
+an aggregate (a count or sum), a conditional write is not enough — lock the
+parent row first, then count; the M3 lost-bonus race is the canonical example
+and `completeLesson` the reference implementation (ruling, post-M3).
 Reads happen in Server Components via `lib/queries/*`. No API
 routes in V2 with one exception: `app/api/hooks/booking/route.ts`, the inbound
 n8n receiver (7.12) — third parties cannot invoke Server Actions, so this is the
@@ -1246,8 +1265,9 @@ one front door, HMAC-verified before anything else runs.
 | `requestChanges` | jobId, note | REVIEW → IN_PROGRESS; note posted |
 | `approveCompletion` | jobId | tx: COMPLETED, completedAt, earnings += splits, XP `JOB_COMPLETED`, tier recompute |
 | `enrollInCourse` | courseId | creates Enrollment |
-| `completeLesson` | lessonId | idempotent; tx: LessonCompletion, XP, progress recompute, course-complete bonus, tier recompute |
+| `completeLesson` | lessonId | idempotent; tx: enrollment upsert (lock first — ruling, post-M3), LessonCompletion, XP, progress recompute, course-complete bonus, tier recompute |
 | `sendMessage` | channelId, body | membership check (covers CLIENT users in their ACCOUNT thread); optimistic append |
+| `startDm` | userId | find-or-create the unique employee pair DM channel + both membership rows (ruling, post-M3) |
 | `fetchMessagesAfter` | channelId, cursor | read action for the 5s poll |
 | `requestShadowDraft` | jobId | runs ShadowAgent, stores draft Message |
 | `approveShadowDraft` / `discardShadowDraft` | messageId | clears flag + stamps approver / deletes |

@@ -56,6 +56,32 @@ export const courseIdSchema = z.object({ courseId: zId });
 
 export const lessonIdSchema = z.object({ lessonId: zId });
 
+export const sendMessageSchema = z.object({
+  channelId: zId,
+  body: z
+    .string()
+    .trim()
+    .min(1, "Write something first.")
+    .max(4000, "Keep a message under 4,000 characters."),
+});
+
+export const fetchAfterSchema = z.object({
+  channelId: zId,
+  after: z.string().regex(/^\d{4}-\d{2}-\d{2}T/, "Reload the page and retry."),
+});
+
+export const draftDecisionSchema = z.object({
+  messageId: zId,
+  body: z
+    .string()
+    .trim()
+    .min(1, "An edited draft can't be empty.")
+    .max(4000, "Keep the update under 4,000 characters.")
+    .optional(),
+});
+
+export const startDmSchema = z.object({ userId: zId });
+
 export const jobNoteSchema = z.object({
   jobId: zId,
   note: z.string().trim().max(2000, "Keep the note under 2,000 characters.").optional(),
