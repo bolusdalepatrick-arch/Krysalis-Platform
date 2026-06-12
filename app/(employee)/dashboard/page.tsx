@@ -4,6 +4,7 @@ import PageHeader from "@/components/PageHeader";
 import Eyebrow from "@/components/Eyebrow";
 import AvatarBadge from "@/components/AvatarBadge";
 import ChrysalisGlyph from "@/components/ChrysalisGlyph";
+import TierBadge from "@/components/TierBadge";
 import BookingCardPanel from "@/components/crm/BookingCardPanel";
 import { getSessionUser } from "@/lib/auth";
 import { formatChatTime, formatDate, formatDayContext, formatMoney } from "@/lib/format";
@@ -195,6 +196,7 @@ export default async function TodayPage() {
                   <span className="shrink-0 text-sm font-medium text-primary">
                     {message.senderName}
                   </span>
+                  {message.senderTier !== null ? <TierBadge level={message.senderTier} /> : null}
                   <span className="figure shrink-0 text-xs text-muted">{message.channelName}</span>
                   <span className="min-w-0 flex-1 truncate text-sm text-secondary">
                     {excerpt(message.body, 80)}

@@ -23,21 +23,25 @@ export default function BidForm({
   onClose,
 }: {
   jobId: string;
-  viewer: { id: string; name: string };
+  viewer: { id: string; name: string; tier: number };
   workerPool: string;
   /** When set, the form edits this PENDING bid instead of placing one. */
   bid?: BidView;
   onOptimistic?: (bid: BidView) => void;
-  /** Confirmation echo per PRD 5.7: "Bid placed — 1,200.00 of the 6,500.00 pool." */
+  /** Confirmation toast per PRD 5.7: "Bid placed — 1,200.00 of the 6,500.00 pool." */
   onPlaced?: (message: string) => void;
   onClose?: () => void;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  // Controlled so a failed action can't erase what was typed — an error
+  // that says retry must leave the input worth retrying (PRD 5.7).
+  const [split, setSplit] = useState(bid?.proposedSplit ?? "");
+  const [pitch, setPitch] = useState(bid?.pitchText ?? "");
 
-  function submit(formData: FormData) {
-    const proposedSplit = String(formData.get("proposedSplit") ?? "").trim();
-    const pitchText = String(formData.get("pitchText") ?? "").trim();
+  function submit() {
+    const proposedSplit = split.trim();
+    const pitchText = pitch.trim();
     setError(null);
     startTransition(async () => {
       if (bid) {
@@ -54,6 +58,7 @@ export default function BidForm({
         jobId,
         memberId: viewer.id,
         memberName: viewer.name,
+        memberTier: viewer.tier,
         proposedSplit,
         pitchText: pitchText || null,
         status: "PENDING",
@@ -83,7 +88,8 @@ export default function BidForm({
             type="text"
             inputMode="decimal"
             required
-            defaultValue={bid?.proposedSplit}
+            value={split}
+            onChange={(e) => setSplit(e.target.value)}
             placeholder="1200.00"
             className={`${field} figure`}
           />
@@ -93,7 +99,8 @@ export default function BidForm({
           <input
             name="pitchText"
             type="text"
-            defaultValue={bid?.pitchText ?? ""}
+            value={pitch}
+            onChange={(e) => setPitch(e.target.value)}
             placeholder="Why you, in a sentence or two"
             className={field}
           />

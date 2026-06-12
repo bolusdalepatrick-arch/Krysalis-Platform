@@ -1226,7 +1226,10 @@ type ActionResult<T = void> =
   | { ok: false; error: string };  // error is a 5.7-compliant sentence
 ```
 Actions never throw to the client; they return `ok: false` with copy the UI can
-render verbatim. Reads happen in Server Components via `lib/queries/*`. No API
+render verbatim. State-dependent mutations never read-then-write: guard with a
+conditional updateMany/deleteMany on the expected state and check the affected
+count — a transaction alone is not a guard (ruling, post-M2).
+Reads happen in Server Components via `lib/queries/*`. No API
 routes in V2 with one exception: `app/api/hooks/booking/route.ts`, the inbound
 n8n receiver (7.12) — third parties cannot invoke Server Actions, so this is the
 one front door, HMAC-verified before anything else runs.
@@ -1273,10 +1276,12 @@ else is a plain form action with a pending state on the button
 deliberately on the plain path: it is a race, and the loser must see the truth,
 not a flicker.
 **Domain logic lives in `lib/`**, pure and unit-testable: `lib/money.ts`
-(Decimal math + invariants), `lib/xp.ts` (awards, caps, tier function),
-`lib/crm.ts` (stage rules, account find-or-create), `lib/hmac.ts` (sign +
-timing-safe verify, `node:crypto`), `lib/graph/build.ts`, `lib/leaderboards.ts`,
-`lib/shadow/*`.
+(Decimal math + invariants), `lib/xp.ts` (award amounts, caps, tier function —
+pure constants and math) with `lib/progression.ts#awardXp` as the transaction
+orchestrator (ledger row, then aggregate and tier recomputed from it — ruling,
+post-M2), `lib/crm.ts` (stage rules, account find-or-create), `lib/hmac.ts`
+(sign + timing-safe verify, `node:crypto`), `lib/graph/build.ts`,
+`lib/leaderboards.ts`, `lib/shadow/*`.
 **Dependency allowlist for V2** — nothing else without updating this spec:
 `prisma`, `@prisma/client`, `zod`, `lucide-react`, `d3-force`, `react-markdown`,
 `remark-gfm`, `clsx`. Dev: `vitest`, `tsx`, `@types/d3-force`.

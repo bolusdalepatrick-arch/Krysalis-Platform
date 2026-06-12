@@ -55,7 +55,12 @@ export default async function JobDetailPage({
             jobStatus={job.status}
             workerPool={job.workerPool}
             poolRemainder={poolRemainder}
-            viewer={{ id: viewer.id, name: viewer.name, role: viewer.role }}
+            viewer={{
+              id: viewer.id,
+              name: viewer.name,
+              role: viewer.role,
+              tier: viewer.currentTierLevel,
+            }}
             bids={bids}
           />
         </div>

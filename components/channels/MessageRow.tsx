@@ -1,6 +1,7 @@
 import Link from "next/link";
 import AvatarBadge from "@/components/AvatarBadge";
 import BookingCardPanel from "@/components/crm/BookingCardPanel";
+import TierBadge from "@/components/TierBadge";
 import { formatChatTime } from "@/lib/format";
 import type { MessageView } from "@/lib/queries/channels";
 
@@ -22,6 +23,7 @@ export default function MessageRow({ message }: { message: MessageView }) {
           ) : (
             <span className="text-md font-medium text-primary">{message.senderName}</span>
           )}
+          {message.senderTier !== null ? <TierBadge level={message.senderTier} /> : null}
           <span className="figure text-2xs text-muted">{formatChatTime(message.createdAt)}</span>
         </div>
         <p className="mt-0.5 text-md">{message.body}</p>

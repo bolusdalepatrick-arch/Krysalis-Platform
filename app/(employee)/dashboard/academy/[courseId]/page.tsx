@@ -1,90 +1,83 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Check, Circle } from "lucide-react";
-import PageHeader from "@/components/PageHeader";
 import Eyebrow from "@/components/Eyebrow";
 import Markdown from "@/components/Markdown";
-import { courseById, DEPARTMENTS } from "@/lib/mock";
-import { COMPLETED_LESSON_IDS, completedCount } from "../components/completion";
+import PageHeader from "@/components/PageHeader";
+import { getSessionUser } from "@/lib/auth";
+import { classroom } from "@/lib/queries/academy";
+import EnrollButton from "../components/EnrollButton";
 
-/** Classroom (PRD 7.2): two-pane — ordered module outline on the left with
- *  per-lesson completion ticks, lesson reading surface on the right. */
+/** The classroom (PRD 7.2): two-pane — ordered module outline with
+ *  completion ticks on the left, the reading pane on the right. */
 export default async function ClassroomPage({
   params,
 }: {
   params: Promise<{ courseId: string }>;
 }) {
   const { courseId } = await params;
-  const course = courseById(courseId);
-  if (!course) notFound();
+  const viewer = await getSessionUser();
+  if (!viewer) redirect("/login");
 
-  const deptName =
-    DEPARTMENTS.find((d) => d.id === course.departmentId)?.name ?? course.departmentId;
-  const enrolled = completedCount(course) > 0;
-  const firstLesson = course.modules[0]?.lessons[0];
+  const course = await classroom(courseId, viewer.id);
+  if (!course) notFound();
 
   return (
     <div>
       <PageHeader
-        eyebrow={`${deptName} · Academy`}
+        eyebrow={`${course.departmentName} · Academy`}
         title={course.title}
         meta={course.description}
         actions={
-          enrolled ? (
-            <span className="text-sm text-muted">Enrolled</span>
+          course.enrolled ? (
+            <span className="figure text-sm text-muted">
+              Enrolled · {course.completedLessons} of {course.lessonCount} complete
+            </span>
           ) : (
-            <button
-              type="button"
-              disabled
-              className="h-8 rounded-s bg-accent px-3 text-sm font-medium text-accent-ink disabled:opacity-60"
-            >
-              Enroll
-            </button>
+            <EnrollButton courseId={course.id} />
           )
         }
       />
-      <div className="flex">
-        <aside className="flex w-72 shrink-0 flex-col gap-6 border-r border-line px-6 py-6">
-          {course.modules.map((mod) => (
-            <div key={mod.id}>
-              <Eyebrow as="h2">{mod.title}</Eyebrow>
-              <ul className="mt-2">
-                {mod.lessons.map((lesson) => (
-                  <li key={lesson.id} className="flex h-9 items-center gap-2">
-                    {COMPLETED_LESSON_IDS.has(lesson.id) ? (
-                      <Check size={16} strokeWidth={1.5} className="shrink-0 text-ok" />
-                    ) : (
-                      <Circle size={16} strokeWidth={1.5} className="shrink-0 text-muted" />
-                    )}
+      <div className="flex items-start gap-6 px-6 py-6">
+        <aside className="w-72 shrink-0 space-y-5">
+          {course.modules.map((module) => (
+            <section key={module.id}>
+              <Eyebrow as="h2">{module.title}</Eyebrow>
+              <ul className="mt-1.5">
+                {module.lessons.map((lesson) => (
+                  <li key={lesson.id}>
                     <Link
                       href={`/dashboard/academy/${course.id}/lesson/${lesson.id}`}
-                      className="truncate text-sm text-primary hover:text-accent"
+                      className="flex h-9 items-center gap-2 rounded-s px-2 text-sm text-secondary hover:bg-surface hover:text-primary"
                     >
-                      {lesson.title}
+                      {lesson.completedAt ? (
+                        <Check size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-ok" />
+                      ) : (
+                        <Circle size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
+                      )}
+                      <span className="min-w-0 flex-1 truncate">{lesson.title}</span>
+                      {lesson.durationMin ? (
+                        <span className="figure shrink-0 text-2xs text-muted">
+                          {lesson.durationMin} min
+                        </span>
+                      ) : null}
                     </Link>
-                    {lesson.durationMin ? (
-                      <span className="figure ml-auto shrink-0 text-2xs text-muted">
-                        {lesson.durationMin} min
-                      </span>
-                    ) : null}
                   </li>
                 ))}
               </ul>
-            </div>
+            </section>
           ))}
         </aside>
-        <section className="min-w-0 flex-1 px-6 py-6">
-          {firstLesson?.body ? (
-            <div className="max-w-2xl">
-              <h2 className="font-bold tracking-[-0.01em] text-primary">
-                {firstLesson.title}
-              </h2>
-              <Markdown className="mt-3">{firstLesson.body}</Markdown>
-            </div>
+        <div className="min-w-0 max-w-2xl flex-1">
+          {course.firstLesson?.body ? (
+            <>
+              <h2 className="text-md font-bold tracking-[-0.01em]">{course.firstLesson.title}</h2>
+              <Markdown className="mt-3">{course.firstLesson.body}</Markdown>
+            </>
           ) : (
-            <p className="text-secondary">Select a lesson from the outline.</p>
+            <p className="text-sm text-secondary">Select a lesson from the outline.</p>
           )}
-        </section>
+        </div>
       </div>
     </div>
   );

@@ -1,95 +1,69 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { Check } from "lucide-react";
-import PageHeader from "@/components/PageHeader";
+import { notFound, redirect } from "next/navigation";
 import Markdown from "@/components/Markdown";
-import { courseById } from "@/lib/mock";
-import { COMPLETED_LESSON_IDS, flattenLessons } from "../../../components/completion";
+import PageHeader from "@/components/PageHeader";
+import { getSessionUser } from "@/lib/auth";
+import { lessonPage } from "@/lib/queries/academy";
+import { XP_AMOUNTS } from "@/lib/xp";
+import MarkCompleteButton from "../../../components/MarkCompleteButton";
 
-/** Lesson reader (PRD 7.2): serif markdown body, one completion affordance,
- *  prev/next across the course's flattened lesson order. */
+/** The lesson reader (PRD 7.2): serif markdown body, one completion
+ *  control, prev/next across the course's lesson order. */
 export default async function LessonPage({
   params,
 }: {
   params: Promise<{ courseId: string; lessonId: string }>;
 }) {
   const { courseId, lessonId } = await params;
-  const course = courseById(courseId);
-  if (!course) notFound();
+  const viewer = await getSessionUser();
+  if (!viewer) redirect("/login");
 
-  const flat = flattenLessons(course);
-  const index = flat.findIndex((f) => f.lesson.id === lessonId);
-  if (index === -1) notFound();
-
-  const { lesson, moduleTitle } = flat[index];
-  const prev = index > 0 ? flat[index - 1].lesson : undefined;
-  const next = index < flat.length - 1 ? flat[index + 1].lesson : undefined;
-  const completed = COMPLETED_LESSON_IDS.has(lesson.id);
+  const lesson = await lessonPage(courseId, lessonId, viewer.id);
+  if (!lesson) notFound();
 
   return (
     <div>
       <PageHeader
-        eyebrow={course.title}
+        eyebrow={lesson.courseTitle}
         title={lesson.title}
-        meta={
-          <>
-            Module: {moduleTitle}
-            {lesson.durationMin ? (
-              <>
-                {" · "}
-                <span className="figure">{lesson.durationMin} min</span>
-              </>
-            ) : null}
-          </>
-        }
+        meta={`Module: ${lesson.moduleTitle}${lesson.durationMin ? ` · ${lesson.durationMin} min` : ""}`}
       />
-      <div className="px-6 py-6">
-        <div className="max-w-2xl">
-          {lesson.body ? (
-            <Markdown>{lesson.body}</Markdown>
+      <div className="max-w-2xl px-6 py-6">
+        {lesson.body ? (
+          <Markdown>{lesson.body}</Markdown>
+        ) : (
+          <p className="text-sm text-secondary">
+            The full text of this lesson is being written; the outline is current.
+          </p>
+        )}
+        <div className="mt-6 border-t border-line pt-4">
+          <MarkCompleteButton
+            lessonId={lesson.id}
+            completedAt={lesson.completedAt}
+            courseXp={XP_AMOUNTS.COURSE_COMPLETED}
+          />
+        </div>
+        <div className="mt-4 flex items-center justify-between gap-4 border-t border-line pt-4 text-sm">
+          {lesson.prev ? (
+            <Link
+              href={`/dashboard/academy/${lesson.courseId}/lesson/${lesson.prev.id}`}
+              className="text-accent underline-offset-2 hover:underline"
+            >
+              Previous: {lesson.prev.title}
+            </Link>
           ) : (
-            <p className="text-secondary">
-              The full text of this lesson is being written; the outline is current.
-            </p>
+            <span />
           )}
-          <div className="mt-8">
-            {completed ? (
-              <p className="figure flex items-center gap-2 text-sm text-muted">
-                <Check size={16} strokeWidth={1.5} />
-                Completed Jun 10, 2026
-              </p>
-            ) : (
-              <button
-                type="button"
-                disabled
-                className="h-8 rounded-s bg-accent px-3 text-sm font-medium text-accent-ink disabled:opacity-60"
-              >
-                Mark lesson complete
-              </button>
-            )}
-          </div>
-          <div className="mt-8 flex items-center justify-between gap-4 border-t border-line pt-4">
-            {prev ? (
-              <Link
-                href={`/dashboard/academy/${course.id}/lesson/${prev.id}`}
-                className="text-sm text-accent"
-              >
-                Previous: {prev.title}
-              </Link>
-            ) : (
-              <span />
-            )}
-            {next ? (
-              <Link
-                href={`/dashboard/academy/${course.id}/lesson/${next.id}`}
-                className="text-sm text-accent"
-              >
-                Next: {next.title}
-              </Link>
-            ) : (
-              <span />
-            )}
-          </div>
+          {lesson.next ? (
+            <Link
+              href={`/dashboard/academy/${lesson.courseId}/lesson/${lesson.next.id}`}
+              className="text-right text-accent underline-offset-2 hover:underline"
+            >
+              Next: {lesson.next.title}
+            </Link>
+          ) : (
+            <span />
+          )}
         </div>
       </div>
     </div>

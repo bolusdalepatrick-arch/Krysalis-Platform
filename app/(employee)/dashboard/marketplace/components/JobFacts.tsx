@@ -1,6 +1,7 @@
 import Link from "next/link";
 import AvatarBadge from "@/components/AvatarBadge";
 import Eyebrow from "@/components/Eyebrow";
+import TierBadge from "@/components/TierBadge";
 import { formatDate } from "@/lib/format";
 
 const EM_DASH = "—";
@@ -15,7 +16,7 @@ export default function JobFacts({
   completedAt,
   children,
 }: {
-  workers: { id: string; name: string }[];
+  workers: { id: string; name: string; tier: number }[];
   channel: { id: string; name: string } | null;
   files: { id: string; title: string; fileType: string }[];
   dueAt: string | null;
@@ -39,6 +40,7 @@ export default function JobFacts({
                   >
                     <AvatarBadge id={p.id} name={p.name} size={22} />
                     {p.name}
+                    <TierBadge level={p.tier} />
                   </Link>
                 </li>
               ))}

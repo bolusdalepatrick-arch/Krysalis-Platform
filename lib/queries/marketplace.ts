@@ -29,6 +29,8 @@ export interface BidView {
   jobId: string;
   memberId: string;
   memberName: string;
+  /** Tier badge level (PRD 7.2) — badges render wherever names appear. */
+  memberTier: number;
   proposedSplit: string;
   pitchText: string | null;
   status: "PENDING" | "ACCEPTED" | "REJECTED";
@@ -81,7 +83,7 @@ export async function boardJobs(filter: {
 export interface JobDetail {
   job: JobView;
   bids: BidView[];
-  workers: { id: string; name: string }[];
+  workers: { id: string; name: string; tier: number }[];
   channel: { id: string; name: string } | null;
   files: { id: string; title: string; fileType: string }[];
   /** Unallocated remainder of the worker pool after accepted splits. */
@@ -94,8 +96,12 @@ export async function jobDetail(jobId: string): Promise<JobDetail | null> {
     include: {
       account: { select: { name: true } },
       department: { select: { name: true } },
-      bids: { include: { member: { select: { id: true, name: true } } } },
-      workers: { include: { member: { select: { id: true, name: true } } } },
+      bids: {
+        include: { member: { select: { id: true, name: true, currentTierLevel: true } } },
+      },
+      workers: {
+        include: { member: { select: { id: true, name: true, currentTierLevel: true } } },
+      },
       channel: { select: { id: true, name: true } },
       vaultAssets: { select: { id: true, title: true, fileType: true }, orderBy: { createdAt: "desc" } },
     },
@@ -110,13 +116,18 @@ export async function jobDetail(jobId: string): Promise<JobDetail | null> {
         jobId: bid.jobId,
         memberId: bid.memberId,
         memberName: bid.member.name,
+        memberTier: bid.member.currentTierLevel,
         proposedSplit: bid.proposedSplit.toFixed(2),
         pitchText: bid.pitchText,
         status: bid.status,
         createdAt: bid.createdAt.toISOString(),
       }))
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
-    workers: job.workers.map((w) => ({ id: w.member.id, name: w.member.name })),
+    workers: job.workers.map((w) => ({
+      id: w.member.id,
+      name: w.member.name,
+      tier: w.member.currentTierLevel,
+    })),
     channel: job.channel,
     files: job.vaultAssets,
     poolRemainder: poolRemainder(

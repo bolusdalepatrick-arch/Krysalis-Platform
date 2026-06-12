@@ -146,6 +146,7 @@ export async function placeBid(input: unknown): Promise<ActionResult<BidView>> {
         jobId: bid.jobId,
         memberId: user.id,
         memberName: user.name,
+        memberTier: user.currentTierLevel,
         proposedSplit: bid.proposedSplit.toFixed(2),
         pitchText: bid.pitchText,
         status: bid.status,

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Rail, { type RailData } from "@/components/shell/Rail";
 import TopBar from "@/components/shell/TopBar";
 import RoleSwitcher from "@/components/RoleSwitcher";
+import ToastProvider from "@/components/toast/ToastProvider";
 import { getSessionUser } from "@/lib/auth";
 import { railChannels } from "@/lib/queries/channels";
 
@@ -20,14 +21,23 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
 
   return (
     <div className="theme-employee min-h-dvh bg-base text-md text-primary">
-      <Rail data={rail} />
-      <div className="pl-[248px]">
-        <TopBar user={{ id: user.id, name: user.name, role: user.role }} />
-        <main className="min-h-[calc(100dvh-3rem)]">{children}</main>
-      </div>
-      <div aria-hidden className="canopy-grain" />
-      <div aria-hidden className="canopy-vignette" />
-      <RoleSwitcher activeId={user.id} />
+      <ToastProvider>
+        <Rail data={rail} />
+        <div className="pl-[248px]">
+          <TopBar
+            user={{
+              id: user.id,
+              name: user.name,
+              role: user.role,
+              tier: user.currentTierLevel,
+            }}
+          />
+          <main className="min-h-[calc(100dvh-3rem)]">{children}</main>
+        </div>
+        <div aria-hidden className="canopy-grain" />
+        <div aria-hidden className="canopy-vignette" />
+        <RoleSwitcher activeId={user.id} />
+      </ToastProvider>
     </div>
   );
 }

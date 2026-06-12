@@ -52,6 +52,10 @@ export const bidIdSchema = z.object({ bidId: zId });
 
 export const jobIdSchema = z.object({ jobId: zId });
 
+export const courseIdSchema = z.object({ courseId: zId });
+
+export const lessonIdSchema = z.object({ lessonId: zId });
+
 export const jobNoteSchema = z.object({
   jobId: zId,
   note: z.string().trim().max(2000, "Keep the note under 2,000 characters.").optional(),

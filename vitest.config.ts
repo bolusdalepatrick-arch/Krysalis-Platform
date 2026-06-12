@@ -10,5 +10,8 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["tests/**/*.test.ts"],
+    // Database-backed suites (seed integrity, lesson completion) share one
+    // Postgres; sequential files keep their row counts from racing.
+    fileParallelism: false,
   },
 });

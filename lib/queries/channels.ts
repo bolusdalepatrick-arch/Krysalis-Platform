@@ -69,6 +69,9 @@ export interface MessageView {
   senderId: string;
   senderName: string;
   senderIsSystem: boolean;
+  /** Tier badge level for employee-side senders; null for clients and
+   *  system users, who are outside the tier system (PRD 7.2). */
+  senderTier: number | null;
   body: string;
   isShadowDraft: boolean;
   approvedById: string | null;
@@ -114,7 +117,9 @@ export async function channelPage(
   const messages = await prisma.message.findMany({
     where: { channelId },
     include: {
-      sender: { select: { id: true, name: true, isSystem: true } },
+      sender: {
+        select: { id: true, name: true, isSystem: true, role: true, currentTierLevel: true },
+      },
       bookingCard: { include: { claimedBy: { select: { name: true } } } },
     },
     orderBy: { createdAt: "asc" },
@@ -133,6 +138,10 @@ export async function channelPage(
       senderId: m.sender.id,
       senderName: m.sender.name,
       senderIsSystem: m.sender.isSystem,
+      senderTier:
+        !m.sender.isSystem && m.sender.role !== "CLIENT" && m.sender.role !== "USER"
+          ? m.sender.currentTierLevel
+          : null,
       body: m.body,
       isShadowDraft: m.isShadowDraft,
       approvedById: m.approvedById,
@@ -170,6 +179,7 @@ export async function recentActivity(
     channelName: string;
     senderId: string;
     senderName: string;
+    senderTier: number | null;
     body: string;
     createdAt: string;
   }[]
@@ -177,7 +187,9 @@ export async function recentActivity(
   const messages = await prisma.message.findMany({
     where: { isShadowDraft: false },
     include: {
-      sender: { select: { id: true, name: true } },
+      sender: {
+        select: { id: true, name: true, isSystem: true, role: true, currentTierLevel: true },
+      },
       channel: { include: channelInclude },
     },
     orderBy: { createdAt: "desc" },
@@ -192,6 +204,10 @@ export async function recentActivity(
       channelName: m.channel.name,
       senderId: m.sender.id,
       senderName: m.sender.name,
+      senderTier:
+        !m.sender.isSystem && m.sender.role !== "CLIENT" && m.sender.role !== "USER"
+          ? m.sender.currentTierLevel
+          : null,
       body: m.body,
       createdAt: m.createdAt.toISOString(),
     }));

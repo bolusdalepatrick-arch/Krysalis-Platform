@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Settings } from "lucide-react";
 import AvatarBadge from "@/components/AvatarBadge";
+import TierBadge from "@/components/TierBadge";
 import { signOut } from "@/app/actions/auth";
 
 /** Top context bar for the employee hub: identity on the right, settings,
@@ -8,7 +9,7 @@ import { signOut } from "@/app/actions/auth";
 export default function TopBar({
   user,
 }: {
-  user: { id: string; name: string; role: string };
+  user: { id: string; name: string; role: string; tier: number };
 }) {
   return (
     <header className="sticky top-0 z-30 flex h-12 items-center justify-end gap-3 border-b border-line bg-base/95 px-4">
@@ -26,6 +27,7 @@ export default function TopBar({
       >
         <AvatarBadge id={user.id} name={user.name} size={24} />
         <span className="text-sm text-primary">{user.name}</span>
+        <TierBadge level={user.tier} />
         <span className="figure text-2xs uppercase tracking-[0.08em] text-muted">
           {user.role}
         </span>

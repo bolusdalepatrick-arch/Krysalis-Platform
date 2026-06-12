@@ -5,6 +5,8 @@ import Link from "next/link";
 import AvatarBadge from "@/components/AvatarBadge";
 import StatusBadge, { type StatusTone } from "@/components/StatusBadge";
 import { acceptBid, rejectBid, withdrawBid } from "@/app/actions/marketplace";
+import TierBadge from "@/components/TierBadge";
+import { useToast } from "@/components/toast/ToastProvider";
 import type { ActionResult } from "@/lib/actions";
 import { formatDate, formatMoney } from "@/lib/format";
 import type { BidView } from "@/lib/queries/marketplace";
@@ -36,7 +38,7 @@ export default function BidsPanel({
   jobStatus: string;
   workerPool: string;
   poolRemainder: string;
-  viewer: { id: string; name: string; role: string };
+  viewer: { id: string; name: string; role: string; tier: number };
   bids: BidView[];
 }) {
   const [optimisticBids, addOptimistic] = useOptimistic(
@@ -44,9 +46,9 @@ export default function BidsPanel({
     (state: BidView[], bid: BidView) => [...state, bid],
   );
   const [editing, setEditing] = useState(false);
-  const [confirmation, setConfirmation] = useState<string | null>(null);
   const [rowError, setRowError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const { push } = useToast();
 
   const isAdmin = viewer.role === "ADMIN";
   const own = bids.find((b) => b.memberId === viewer.id);
@@ -101,6 +103,7 @@ export default function BidsPanel({
                   >
                     <AvatarBadge id={bid.memberId} name={bid.memberName} size={22} />
                     <span className="whitespace-nowrap">{bid.memberName}</span>
+                    <TierBadge level={bid.memberTier} />
                   </Link>
                 </td>
                 <td className="figure py-2.5 pr-4 text-right text-sm text-primary">
@@ -169,14 +172,13 @@ export default function BidsPanel({
         </p>
       )}
       {rowError ? <p className="mt-2 text-sm text-danger">{rowError}</p> : null}
-      {confirmation ? <p className="figure mt-2 text-sm text-ok">{confirmation}</p> : null}
       {canPlace ? (
         <BidForm
           jobId={jobId}
           viewer={viewer}
           workerPool={workerPool}
           onOptimistic={addOptimistic}
-          onPlaced={setConfirmation}
+          onPlaced={push}
         />
       ) : null}
       {own && own.status === "PENDING" && editing ? (
