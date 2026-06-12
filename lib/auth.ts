@@ -23,12 +23,15 @@ export async function getSessionUser(): Promise<User | null> {
   return prisma.user.findUnique({ where: { id } });
 }
 
-/** Throws to the nearest error boundary when the role check fails. Server
- *  Actions should prefer returning an ActionResult; layouts redirect. */
-export async function requireRole(...roles: SystemRole[]): Promise<Persona> {
-  const persona = await getSessionPersona();
-  if (!persona || !roles.includes(persona.role)) {
+/** Role gate for Server Actions (PRD section 4): resolves the session
+ *  against the User table so role changes in the database are honored —
+ *  the static persona list is only the switcher's display catalog.
+ *  Throws to the nearest error boundary; actions should catch and return
+ *  an ActionResult. */
+export async function requireRole(...roles: SystemRole[]): Promise<User> {
+  const user = await getSessionUser();
+  if (!user || !roles.includes(user.role)) {
     throw new Error("You don't have access to this area.");
   }
-  return persona;
+  return user;
 }

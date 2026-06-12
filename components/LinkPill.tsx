@@ -17,10 +17,10 @@ export default function LinkPill({
       href={href}
       aria-current={active ? "true" : undefined}
       className={clsx(
-        "inline-flex h-6 items-center rounded-full border px-2.5 text-xs",
+        "inline-flex h-7 items-center rounded-s border px-2.5 text-xs",
         active
-          ? "border-line-strong bg-accent-soft font-medium text-accent"
-          : "border-line text-secondary hover:bg-surface hover:text-primary",
+          ? "border-line-strong bg-accent-soft text-accent"
+          : "border-line text-secondary hover:text-primary",
       )}
     >
       {children}

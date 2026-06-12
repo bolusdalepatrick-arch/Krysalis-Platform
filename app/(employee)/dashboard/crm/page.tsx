@@ -1,5 +1,5 @@
 import PageHeader from "@/components/PageHeader";
-import LinkPill from "@/components/crm/LinkPill";
+import LinkPill from "@/components/LinkPill";
 import PipelineBoard from "@/components/crm/PipelineBoard";
 import PipelineTable from "@/components/crm/PipelineTable";
 import { STAGE_ORDER, stageLabel } from "@/components/crm/stages";

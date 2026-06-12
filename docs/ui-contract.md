@@ -23,6 +23,10 @@ which theme they are in:
   palette is wiped), arbitrary color values, gradients, `backdrop-blur`, glow
   shadows. `--shadow-raise` (via `style={{ boxShadow: "var(--shadow-raise)" }}`)
   is allowed on raised cards/popovers only; it is `none` in the employee theme.
+- One sanctioned hex exception outside `app/globals.css`: the
+  `viewport.themeColor` literals in `app/layout.tsx` (browser chrome only —
+  Next.js cannot read CSS custom properties there). They mirror the two
+  `--color-bg-base` values; change them together with the tokens.
 
 ## Type
 

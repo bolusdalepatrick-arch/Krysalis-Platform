@@ -412,7 +412,7 @@ Scope was fixed in the May proposal: parser, sync, queue, and a four-week shadow
     firmMargin: 1700,
     accountId: "a-tidegate",
     departmentId: "design",
-    completedAt: "2026-06-06",
+    completedAt: "2026-06-05",
     workerIds: ["u-aiko"],
   },
 ];
@@ -453,9 +453,9 @@ export const BIDS: MockBid[] = [
   { id: "b-rwl-june", jobId: "j-ratio-wholesale-list", memberId: "u-june", proposedSplit: 1500, pitchText: "I did their bag labels; happy to keep the system consistent.", status: "REJECTED", createdAt: "2026-06-02T14:12:00" },
   { id: "b-ndo-martina", jobId: "j-northbeam-driver-onboarding", memberId: "u-martina", proposedSplit: 1900, pitchText: "I wrote our own onboarding packet; same shape, different forms.", status: "ACCEPTED", createdAt: "2026-06-04T09:18:00" },
   { id: "b-ndo-tomas", jobId: "j-northbeam-driver-onboarding", memberId: "u-tomas", proposedSplit: 2000, pitchText: "I know their depot leads from phase one and can collect the source docs fast.", status: "REJECTED", createdAt: "2026-06-04T10:40:00" },
-  { id: "b-tci-priya", jobId: "j-tidegate-claims-intake", memberId: "u-priya", proposedSplit: 7400, pitchText: "Parser plus sync is the same pattern as Cassia's pipeline, with a harder exception story. I want it.", status: "ACCEPTED", createdAt: "2026-05-23T09:05:00" },
-  { id: "b-tci-marcus", jobId: "j-tidegate-claims-intake", memberId: "u-marcus", proposedSplit: 5200, pitchText: "The exception queue needs a real interface, not a spreadsheet. I'll build it alongside Priya's parser.", status: "ACCEPTED", createdAt: "2026-05-23T11:38:00" },
-  { id: "b-tci-owen", jobId: "j-tidegate-claims-intake", memberId: "u-owen", proposedSplit: 6000, pitchText: "I can take the sync layer; their system of record has a workable API.", status: "REJECTED", createdAt: "2026-05-23T13:21:00" },
+  { id: "b-tci-priya", jobId: "j-tidegate-claims-intake", memberId: "u-priya", proposedSplit: 7400, pitchText: "Parser plus sync is the same pattern as Cassia's pipeline, with a harder exception story. I want it.", status: "ACCEPTED", createdAt: "2026-05-25T09:05:00" },
+  { id: "b-tci-marcus", jobId: "j-tidegate-claims-intake", memberId: "u-marcus", proposedSplit: 5200, pitchText: "The exception queue needs a real interface, not a spreadsheet. I'll build it alongside Priya's parser.", status: "ACCEPTED", createdAt: "2026-05-25T11:38:00" },
+  { id: "b-tci-owen", jobId: "j-tidegate-claims-intake", memberId: "u-owen", proposedSplit: 6000, pitchText: "I can take the sync layer; their system of record has a workable API.", status: "REJECTED", createdAt: "2026-05-25T13:21:00" },
   { id: "b-vs-june", jobId: "j-vargas-site", memberId: "u-june", proposedSplit: 1170, pitchText: "One page, one form, done properly. I'll bring two directions to the first call.", status: "ACCEPTED", createdAt: "2026-05-28T10:02:00" },
   { id: "b-crf-viktor", jobId: "j-cassia-referral-fax", memberId: "u-viktor", proposedSplit: 2300, pitchText: "Fax classification is mostly normalization; the pilot scope is honest about that.", status: "ACCEPTED", createdAt: "2026-05-19T08:51:00" },
   { id: "b-crf-fatima", jobId: "j-cassia-referral-fax", memberId: "u-fatima", proposedSplit: 1800, pitchText: "I'll own the routing rules and the audit trail the clinics asked for.", status: "ACCEPTED", createdAt: "2026-05-19T09:33:00" },
@@ -481,9 +481,10 @@ export const DEALS: MockDeal[] = [
     stage: "INBOUND",
     source: "REFERRAL",
     createdAt: "2026-06-10",
-    lastActivityAt: "2026-06-10",
+    lastActivityAt: "2026-06-11",
     activities: [
       { kind: "NOTE", authorId: "u-lena", body: "Felix asked during the email-flow review whether we could replace wholesale order emails with a portal. Worth a real scope.", at: "2026-06-10T15:20:00" },
+      { kind: "CALL", authorId: "u-lena", body: "Walked Felix through what a portal scope needs from their side. Price-list cleanup ships first either way.", at: "2026-06-11T10:30:00" },
     ],
   },
   {
@@ -494,9 +495,10 @@ export const DEALS: MockDeal[] = [
     stage: "INBOUND",
     source: "OUTBOUND",
     createdAt: "2026-06-11",
-    lastActivityAt: "2026-06-11",
+    lastActivityAt: "2026-06-12",
     activities: [
       { kind: "EMAIL", authorId: "u-hana", body: "Margaret replied to the quarterly check-in: payroll data entry is their next bottleneck. Asked for a call next week.", at: "2026-06-11T09:48:00" },
+      { kind: "NOTE", authorId: "u-hana", body: "Pulled the vendor list from Margaret's reply: two payroll systems, one CSV bridge between them. Scope call set for Tuesday.", at: "2026-06-12T09:05:00" },
     ],
   },
   {
@@ -507,10 +509,11 @@ export const DEALS: MockDeal[] = [
     stage: "DISCOVERY",
     source: "WEBSITE",
     createdAt: "2026-06-09",
-    lastActivityAt: "2026-06-09",
+    lastActivityAt: "2026-06-10",
     activities: [
       { kind: "NOTE", authorId: "u-marcus", body: "Claimed from the bounty board. Summer season starts in three weeks — they want scheduling pain gone before it.", at: "2026-06-09T08:41:00" },
       { kind: "STAGE_CHANGE", authorId: "u-marcus", body: "Stage set to DISCOVERY on claim.", at: "2026-06-09T08:41:00" },
+      { kind: "EMAIL", authorId: "u-marcus", body: "Sent Tom a short agenda for Tuesday: season calendar, crew roster shape, and where the maintenance log lives today.", at: "2026-06-10T11:20:00" },
     ],
   },
   {
@@ -521,10 +524,11 @@ export const DEALS: MockDeal[] = [
     stage: "DISCOVERY",
     source: "WEBSITE",
     createdAt: "2026-06-05",
-    lastActivityAt: "2026-06-11",
+    lastActivityAt: "2026-06-12",
     activities: [
       { kind: "STAGE_CHANGE", authorId: "u-sara", body: "Stage set to DISCOVERY on claim.", at: "2026-06-05T12:03:00" },
       { kind: "CALL", authorId: "u-sara", body: "Call w/ Yusuf. Ninety units, two office staff. Rent reminders and maintenance triage are most of the inbox. Send the Northbeam case study.", at: "2026-06-11T16:10:00" },
+      { kind: "EMAIL", authorId: "u-sara", body: "Northbeam case study sent. Yusuf wants his office manager on the next call.", at: "2026-06-12T08:50:00" },
     ],
   },
   {
@@ -596,6 +600,7 @@ export const DEALS: MockDeal[] = [
       { kind: "STAGE_CHANGE", authorId: "u-lena", body: "Stage: DISCOVERY to PROPOSAL.", at: "2026-05-06T09:02:00" },
       { kind: "EMAIL", authorId: "u-lena", body: "Proposal sent: intake parser, claim-record sync, exception queue, four-week shadow period. 21,500.00 fixed.", at: "2026-05-06T09:06:00" },
       { kind: "CALL", authorId: "u-lena", body: "Ruth has finance sign-off. Verbal yes; contract with their counsel.", at: "2026-05-19T16:20:00" },
+      { kind: "STAGE_CHANGE", authorId: "u-lena", body: "Stage: PROPOSAL to VERBAL.", at: "2026-05-19T16:25:00" },
       { kind: "STAGE_CHANGE", authorId: "u-lena", body: "Stage: VERBAL to WON. Signed engagement returned.", at: "2026-05-22T10:08:00" },
     ],
   },
@@ -607,13 +612,15 @@ export const DEALS: MockDeal[] = [
     stage: "LOST",
     source: "OUTBOUND",
     value: 5200,
-    lostAt: "2026-05-09",
+    lostAt: "2026-05-08",
     lostReason: "Chose to hire in-house; revisit Q4.",
     createdAt: "2026-03-30",
-    lastActivityAt: "2026-05-09",
+    lastActivityAt: "2026-05-08",
     activities: [
       { kind: "CALL", authorId: "u-daniel", body: "Margaret asked about scanning and indexing fifteen years of client files. Scoped a phased approach.", at: "2026-03-30T14:05:00" },
-      { kind: "STAGE_CHANGE", authorId: "u-daniel", body: "Stage: PROPOSAL to LOST. Chose to hire in-house; revisit Q4.", at: "2026-05-09T11:42:00" },
+      { kind: "STAGE_CHANGE", authorId: "u-daniel", body: "Stage: DISCOVERY to PROPOSAL.", at: "2026-04-17T10:00:00" },
+      { kind: "EMAIL", authorId: "u-daniel", body: "Proposal sent: phased scanning, index-first. Margaret weighing it against a part-time hire.", at: "2026-04-20T09:30:00" },
+      { kind: "STAGE_CHANGE", authorId: "u-daniel", body: "Stage: PROPOSAL to LOST. Chose to hire in-house; revisit Q4.", at: "2026-05-08T11:42:00" },
     ],
   },
 ];
@@ -713,10 +720,10 @@ const CORE_MESSAGES: RawMessage[] = [
   { channelId: "ch-design", senderId: "u-aiko", at: "2026-06-10T10:12:00", body: "Fernwell collateral went to review yesterday. Margaret's first pass comes back Friday." },
   { channelId: "ch-design", senderId: "u-june", at: "2026-06-10T10:25:00", body: "Vargas wireframes are with Mateo. He picked direction B inside an hour — shortest approval of my year." },
   { channelId: "ch-design", senderId: "u-theo", at: "2026-06-11T14:03:00", body: "Cassia intake posting is worth a look. The paper packet is eleven pages; the flow should be one." },
-  { channelId: "ch-design", senderId: "u-noor", at: "2026-06-12T09:02:00", body: "Working through the brand systems primer this week. The third lesson's checklist is already useful." },
+  { channelId: "ch-design", senderId: "u-ines", at: "2026-06-12T09:02:00", body: "Recommending the brand systems primer's third lesson to anyone scoping client collateral — that checklist keeps paying for itself." },
 
   // marketing
-  { channelId: "ch-marketing", senderId: "u-hana", at: "2026-06-09T11:18:00", body: "Ratio email flows are in review. Dunning numbers from the test window: 38 recovered subscriptions." },
+  { channelId: "ch-marketing", senderId: "u-hana", at: "2026-06-09T11:18:00", body: "Ratio email flows go up for review today. Dunning numbers from the test window: 38 recovered subscriptions." },
   { channelId: "ch-marketing", senderId: "u-camille", at: "2026-06-09T11:30:00", body: "The win-back subject lines that worked are the plain ones. Filing that away for the spring kit." },
   { channelId: "ch-marketing", senderId: "u-dmitri", at: "2026-06-11T15:44:00", body: "Site audit for the gate refresh is in the vault under Gate content audit, June. Three pages carry most of the traffic." },
 
@@ -745,7 +752,7 @@ const CORE_MESSAGES: RawMessage[] = [
   { channelId: "ch-job-tidegate", senderId: "u-marcus", at: "2026-06-04T16:33:00", body: "Settled then. I'll build the mapper against staging and keep the record writer behind a flag." },
   { channelId: "ch-job-tidegate", senderId: "u-priya", at: "2026-06-09T10:20:00", body: "Second carrier format is harder — their field names changed in March and the sample set mixes both versions. Normalizing first." },
   { channelId: "ch-job-tidegate", senderId: "u-marcus", at: "2026-06-10T14:12:00", body: "Exception queue interface is up on staging. Screenshots in the vault under Exception queue, first cut." },
-  { channelId: "ch-job-tidegate", senderId: "u-lena", at: "2026-06-11T09:15:00", body: "Ruth asked for a written progress note for her steering meeting Monday. Keep it to a paragraph; I'll pass it through." },
+  { channelId: "ch-job-tidegate", senderId: "u-priya", at: "2026-06-11T09:15:00", body: "Lena passed along Ruth's ask: a written progress note for her steering meeting Monday, a paragraph at most. Drafting it for review." },
 
   // Fernwell brand job channel — recent turns (earlier turns are authored extras)
   { channelId: "ch-job-fernwell-brand", senderId: "u-june", at: "2026-06-09T10:30:00", body: "Full collateral set is in the vault: letterhead, proposal template, report covers. Submitting for review." },
@@ -754,28 +761,28 @@ const CORE_MESSAGES: RawMessage[] = [
 
   // Vargas job channel — recent turns
   { channelId: "ch-job-vargas", senderId: "u-june", at: "2026-06-08T09:45:00", body: "Direction B approved. Building the intake form fields from Mateo's current questionnaire, minus the four questions nobody answers." },
-  { channelId: "ch-job-vargas", senderId: "u-aiko", at: "2026-06-08T10:02:00", body: "Keep the form under ten fields. His clients are retirees; every extra field costs him a booking." },
+  { channelId: "ch-design", senderId: "u-aiko", at: "2026-06-08T10:02:00", body: "June — keep the Vargas form under ten fields. His clients are retirees; every extra field costs him a booking." },
   { channelId: "ch-job-vargas", senderId: "u-june", at: "2026-06-11T16:20:00", body: "Staging link is in the vault. Copy review is the last open item before client review." },
 
   // Lighter job channels
   { channelId: "ch-job-ratio-wholesale", senderId: "u-caleb", at: "2026-06-03T10:05:00", body: "Source price sheet is in. The current list has three conflicting versions in circulation, which explains the wrong-invoice complaints." },
-  { channelId: "ch-job-ratio-wholesale", senderId: "u-aiko", at: "2026-06-03T10:18:00", body: "Make the exported PDF the only artifact that leaves the building. One sheet, one export, no copies." },
+  { channelId: "ch-design", senderId: "u-aiko", at: "2026-06-03T10:18:00", body: "Caleb — make the exported Ratio PDF the only artifact that leaves the building. One sheet, one export, no copies." },
   { channelId: "ch-job-ratio-wholesale", senderId: "u-caleb", at: "2026-06-10T15:40:00", body: "Layout draft is done; testing the edit-and-export flow with Felix's real data on Friday." },
   { channelId: "ch-job-northbeam-driver", senderId: "u-martina", at: "2026-06-05T09:30:00", body: "Collected all nine current forms from the depot leads. Four ask for the same address block; the packet collapses them to one." },
-  { channelId: "ch-job-northbeam-driver", senderId: "u-tomas", at: "2026-06-05T09:44:00", body: "Check the CDL verification step — Spokane and Boise run it differently and someone should pick a winner." },
-  { channelId: "ch-job-northbeam-driver", senderId: "u-martina", at: "2026-06-09T11:12:00", body: "Curtis picked Spokane's version. Drafting the checklist around it." },
-  { channelId: "ch-job-cassia-fax", senderId: "u-viktor", at: "2026-06-06T10:15:00", body: "Classifier handles the two big referral sources at 91 percent on the sample set. The long tail goes to manual routing as scoped." },
-  { channelId: "ch-job-cassia-fax", senderId: "u-fatima", at: "2026-06-06T10:31:00", body: "Audit trail is writing per-fax decisions now. Misclassification log lands in the vault before Tuesday's review." },
+  { channelId: "ch-operations", senderId: "u-tomas", at: "2026-06-05T09:44:00", body: "Martina — check the CDL verification step on the driver packet. Spokane and Boise run it differently and someone should pick a winner." },
+  { channelId: "ch-job-northbeam-driver", senderId: "u-martina", at: "2026-06-09T11:12:00", body: "CDL verification: Curtis picked Spokane's version. Drafting the checklist around it." },
+  { channelId: "ch-job-cassia-fax", senderId: "u-viktor", at: "2026-06-05T10:15:00", body: "Classifier handles the two big referral sources at 91 percent on the sample set. The long tail goes to manual routing as scoped." },
+  { channelId: "ch-job-cassia-fax", senderId: "u-fatima", at: "2026-06-05T10:31:00", body: "Audit trail is writing per-fax decisions now. Misclassification log lands in the vault before Tuesday's review." },
   { channelId: "ch-job-cassia-fax", senderId: "u-viktor", at: "2026-06-11T14:20:00", body: "Alana flagged that orthopedics faxes were landing in the wrong queue. Traced it to a cover-sheet variant; fix is in." },
-  { channelId: "ch-job-ratio-emails", senderId: "u-rebecca", at: "2026-06-04T09:10:00", body: "Dunning flow has been live three weeks: 38 recovered of 61 failed payments. Win-back starts sending Thursday." },
-  { channelId: "ch-job-ratio-emails", senderId: "u-camille", at: "2026-06-04T09:25:00", body: "Win-back copy is final in the vault, Ratio dunning flow, copy deck. Plain text beat the designed version everywhere, so plain text it is." },
+  { channelId: "ch-job-ratio-emails", senderId: "u-rebecca", at: "2026-06-04T09:10:00", body: "Dunning flow has been live two weeks: 38 recovered of 61 failed payments. Win-back starts sending Thursday." },
+  { channelId: "ch-job-ratio-emails", senderId: "u-camille", at: "2026-06-04T09:25:00", body: "Win-back copy is final in the vault, Ratio email flows, copy deck. Plain text beat the designed version everywhere, so plain text it is." },
   { channelId: "ch-job-ratio-emails", senderId: "u-rebecca", at: "2026-06-09T16:02:00", body: "First-window results sheet is filed. Submitting the set for review." },
   { channelId: "ch-job-northbeam-d1", senderId: "u-priya", at: "2026-04-15T10:00:00", body: "Data model is frozen and documented in the vault. Phase two can build on it without a migration." },
   { channelId: "ch-job-northbeam-d1", senderId: "u-owen", at: "2026-04-17T09:30:00", body: "Final ingest run replayed clean. Handover note is filed; calling this done." },
   { channelId: "ch-job-cassia-reminders", senderId: "u-daniel", at: "2026-02-18T11:00:00", body: "Flow diagram for all three clinics is in the vault. Quiet-hours rules differ per clinic and the pipeline respects each." },
   { channelId: "ch-job-cassia-reminders", senderId: "u-viktor", at: "2026-02-20T09:15:00", body: "Reschedule flow shipped. Front desk reports the morning call block is gone — that was the whole point." },
   { channelId: "ch-job-tidegate-letters", senderId: "u-aiko", at: "2026-06-02T10:30:00", body: "All eight letter templates rebuilt in their document system. Locked regions hold; their team can edit copy but not break layout." },
-  { channelId: "ch-job-tidegate-letters", senderId: "u-aiko", at: "2026-06-06T09:45:00", body: "Sam's team round-tripped every template without damage. Masters are in the vault; closing out." },
+  { channelId: "ch-job-tidegate-letters", senderId: "u-aiko", at: "2026-06-05T09:45:00", body: "Sam's team round-tripped every template without damage. Masters are in the vault; closing out." },
 
   // Account threads
   { channelId: "ch-acct-tidegate", senderId: "u-lena", at: "2026-05-26T10:00:00", body: "Ruth — your portal is live; the intake engagement kicks off Monday. You'll see the engagement listed below with its current status, and anything we deliver lands in the shared files panel." },
@@ -815,17 +822,19 @@ export const EXTRA_MESSAGES: RawMessage[] = [
   { channelId: "ch-marketing", senderId: "u-jonas", at: "2026-06-03T09:55:00", body: "May paid-search wrap: spend flat, discovery bookings up two. The Cassia case-study page keeps outconverting the services page, so June budget shifts toward case studies." },
   { channelId: "ch-job-vargas", senderId: "u-june", at: "2026-06-03T11:05:00", body: "Both directions are in the design file. A is a quiet serif on an ivory ground — reads like a well-set letter. B is a confident grotesk with a firmer grid, closer to the bigger advisory shops. Honest about it: I lean B." },
   { channelId: "ch-acct-cassia", senderId: "u-fatima", at: "2026-06-03T11:10:00", body: "Expected at pilot stage, and exactly what we want flagged. Both came from the same sender, whose cover sheet the classifier hasn't seen before — a routing rule for it goes in this week. Every flag feeds the misclassification review on the sixteenth." },
-  { channelId: "ch-job-vargas", senderId: "u-aiko", at: "2026-06-03T11:34:00", body: "Looked at both. B, but keep A's pacing — the grotesk earns trust at small sizes, the generous spacing keeps it from feeling like a bank. Don't make Mateo choose between warm and credible." },
+  { channelId: "ch-design", senderId: "u-aiko", at: "2026-06-03T11:34:00", body: "June — looked at both. B, but keep A's pacing — the grotesk earns trust at small sizes, the generous spacing keeps it from feeling like a bank. Don't make Mateo choose between warm and credible." },
   { channelId: "ch-engineering", senderId: "u-grace", at: "2026-06-03T14:10:00", body: "Trying snapshot fixtures for the fax-pilot parser tests instead of assertion lists. Early verdict: regressions show up as readable diffs. If it holds through the week I'll write it up properly." },
   { channelId: "ch-job-fernwell-brand", senderId: "u-theo", at: "2026-06-03T15:20:00", body: "Round-trip test is booked on Margaret's machine Thursday: open, save, print, reopen, restyle. If the styles survive, the pack goes up as Fernwell Word templates, round-trip tested — it doesn't earn the name otherwise." },
   { channelId: "ch-job-vargas", senderId: "u-june", at: "2026-06-04T09:50:00", body: "Intake next. His current questionnaire is nineteen questions and he admits four of them never get answered. Trimming to what he actually uses in a first consultation." },
   { channelId: "ch-acct-ratio", senderId: "u-caleb", at: "2026-06-04T10:15:00", body: "That's the exact case it's built around. You edit one sheet — SKUs and prices only — and export; the layout never gets touched. First version comes to you the week of June 22." },
+  { channelId: "ch-acct-ratio", senderId: "u-felix", at: "2026-06-04T10:40:00", body: "Week of the 22nd works. I'll hold the next price change until the new sheet is in." },
   { channelId: "ch-operations", senderId: "u-tomas", at: "2026-06-04T13:25:00", body: "Sent Martina the depot contacts from Northbeam phase one for the driver packet. Source docs should be complete by Friday — better to start from a full folder." },
   { channelId: "ch-job-vargas", senderId: "u-june", at: "2026-06-04T15:10:00", body: "Constraint from Mateo's side: a compliance reviewer signs off on anything client-facing, and the risk-tolerance question is non-negotiable whatever else gets cut. Building the review pass into the timeline." },
   { channelId: "ch-design", senderId: "u-theo", at: "2026-06-04T16:15:00", body: "Field note from the Fernwell templates: Word style inheritance breaks the moment someone pastes from Outlook. The templates now lock body styles against it. Writing it down for the next template job." },
   { channelId: "ch-job-vargas", senderId: "u-june", at: "2026-06-05T16:05:00", body: "Both directions go to Mateo Monday morning with a recommendation on B, pacing per Aiko. If he decides fast we hold June 30 with room." },
   { channelId: "ch-acct-fernwell", senderId: "u-margaret", at: "2026-06-09T13:05:00", body: "When do the refreshed templates reach us? Quarterly letters start the week of the 22nd and I want the new letterhead on them." },
   { channelId: "ch-acct-fernwell", senderId: "u-june", at: "2026-06-10T09:30:00", body: "Internal review wraps Thursday, then the set comes to you for a pass. If your notes are light you'll have final files by the 13th — ahead of the quarterly letters either way." },
+  { channelId: "ch-acct-fernwell", senderId: "u-margaret", at: "2026-06-10T10:05:00", body: "That works. Send the set to Paul as well when it lands; he keeps our template folder." },
   { channelId: "ch-acct-cassia", senderId: "u-alana", at: "2026-06-10T14:20:00", body: "One more from the same sender yesterday — forwarded it to the queue as before. Otherwise routing has been right all week, which the front desk has noticed." },
 ];
 
@@ -919,17 +928,17 @@ export const CORE_FORUM_POSTS: MockForumPost[] = [
     body: "For the Cassia fax pilot I started checking parser output against committed snapshot fixtures instead of hand-written assertions. Catching regressions has been faster and review diffs are readable. If you're testing anything that transforms documents, try it before writing another forty assertions.",
     at: "2026-06-08T10:35:00",
     replies: [
-      { id: "fr-4", authorId: "u-viktor", body: "Adopting this for the carrier formats on Tidegate. The March field rename would have been a one-line diff instead of a debugging morning.", at: "2026-06-08T11:20:00" },
+      { id: "fr-4", authorId: "u-viktor", body: "Adopting this for the fax classifier on the Cassia pilot. The cover-sheet variant we hit last week would have shown up as a one-line diff.", at: "2026-06-08T11:20:00" },
     ],
   },
   {
     id: "f-hiring-note",
     authorId: "u-mara",
     title: "Hiring: one more automation engineer this summer",
-    body: "The pipeline says we'll need a fourth automation engineer by August. Referrals first, as always — send people to me directly with a line on what you've seen them build. Same bar as ever: ships carefully, writes things down.",
-    at: "2026-06-06T09:10:00",
+    body: "The pipeline says we'll need a second automation engineer by August. Referrals first, as always — send people to me directly with a line on what you've seen them build. Same bar as ever: ships carefully, writes things down.",
+    at: "2026-06-05T09:10:00",
     replies: [
-      { id: "fr-5", authorId: "u-viktor", body: "Sending you someone from my last team. She rebuilt their billing jobs solo and documented every decision.", at: "2026-06-06T10:25:00" },
+      { id: "fr-5", authorId: "u-viktor", body: "Sending you someone from my last team. She rebuilt their billing jobs solo and documented every decision.", at: "2026-06-05T10:25:00" },
     ],
   },
   {
@@ -981,7 +990,7 @@ export const EXTRA_FORUM_POSTS: MockForumPost[] = [
     id: "f-bid-pitch-detail",
     authorId: "u-jonas",
     title: "How much detail belongs in a bid pitch?",
-    body: "Drafting my first bid (Ratio spring campaign) and the pitch keeps growing — a plan, a timeline, a defense of the split. The accepted bids I can see are two sentences. Is the short pitch the convention, or do leads actually read the long ones? Related: on the bounty board, is a longer claim message useful, or is speed the whole etiquette?",
+    body: "Drafting my first marketing-kit bid (Ratio spring campaign) and the pitch keeps growing — a plan, a timeline, a defense of the split. The accepted bids I can see are two sentences. Is the short pitch the convention, or do leads actually read the long ones? Related: on the bounty board, is a longer claim message useful, or is speed the whole etiquette?",
     at: "2026-06-09T14:20:00",
     replies: [
       { id: "fr-9", authorId: "u-priya", body: "Two sentences, but the right two. The pitch proves you've located the actual work; the plan is what you write after acceptance. My Tidegate pitch was one sentence of pattern-matching and one of wanting it — the scoping happened in the channel afterward.", at: "2026-06-09T15:05:00" },
@@ -1019,9 +1028,9 @@ export const CORE_VAULT_ASSETS: MockVaultAsset[] = [
   { id: "v-northbeam-handover", title: "Northbeam phase one, handover note", fileType: "doc", fileUrl: "https://files.krysalis.studio/northbeam/phase-one-handover.docx", sizeKb: 56, isSharedSocial: true, uploadedById: "u-owen", jobId: "j-northbeam-dispatch-1", createdAt: "2026-04-17" },
   { id: "v-cassia-reminder-flows", title: "Cassia reminder pipeline, flow diagram", fileType: "pdf", fileUrl: "https://files.krysalis.studio/cassia/reminder-flows.pdf", sizeKb: 198, isSharedSocial: true, uploadedById: "u-daniel", jobId: "j-cassia-booking-reminders", createdAt: "2026-02-18" },
   { id: "v-cassia-case-study", title: "Cassia case study, client-ready", fileType: "pdf", fileUrl: "https://files.krysalis.studio/cassia/case-study.pdf", sizeKb: 1240, isSharedSocial: true, uploadedById: "u-sara", jobId: "j-cassia-booking-reminders", createdAt: "2026-03-06" },
-  { id: "v-ratio-dunning", title: "Ratio dunning flow, copy deck", fileType: "doc", fileUrl: "https://files.krysalis.studio/ratio/dunning-copy.docx", sizeKb: 47, isSharedSocial: false, uploadedById: "u-camille", jobId: "j-ratio-subscription-emails", createdAt: "2026-05-30" },
+  { id: "v-ratio-dunning", title: "Ratio email flows, copy deck", fileType: "doc", fileUrl: "https://files.krysalis.studio/ratio/dunning-copy.docx", sizeKb: 47, isSharedSocial: false, uploadedById: "u-camille", jobId: "j-ratio-subscription-emails", createdAt: "2026-05-29" },
   { id: "v-ratio-results", title: "Ratio email flows, first-window results", fileType: "sheet", fileUrl: "https://files.krysalis.studio/ratio/flow-results-w1.xlsx", sizeKb: 88, isSharedSocial: false, uploadedById: "u-rebecca", jobId: "j-ratio-subscription-emails", createdAt: "2026-06-09" },
-  { id: "v-tidegate-letters", title: "Tidegate quote-letter masters", fileType: "doc", fileUrl: "https://files.krysalis.studio/tidegate/quote-letter-masters.docx", sizeKb: 310, isSharedSocial: false, uploadedById: "u-aiko", jobId: "j-tidegate-quote-letters", createdAt: "2026-06-06" },
+  { id: "v-tidegate-letters", title: "Tidegate quote-letter masters", fileType: "doc", fileUrl: "https://files.krysalis.studio/tidegate/quote-letter-masters.docx", sizeKb: 310, isSharedSocial: false, uploadedById: "u-aiko", jobId: "j-tidegate-quote-letters", createdAt: "2026-06-05" },
   { id: "v-gate-audit", title: "Gate content audit, June", fileType: "sheet", fileUrl: "https://files.krysalis.studio/internal/gate-content-audit-jun.xlsx", sizeKb: 73, isSharedSocial: false, uploadedById: "u-dmitri", createdAt: "2026-06-11" },
 ];
 
@@ -1119,6 +1128,12 @@ status here changes; there is no version of events we see that you don't.
 Files we deliver land in the shared files panel as they're ready. Anything
 listed there is yours to download and keep; if a file you expect is missing,
 say so in the message thread and someone will fix it the same day.
+
+The status words are deliberately plain. "Team assigned, starting soon" means
+the contract is done and scheduling is under way; "in progress" means hands
+are on the work this week; "in review with our team" means a senior pass is
+happening before anything reaches you. If a status hasn't moved in a while
+and you're wondering why, ask in the thread — that's a fine message to send.
 
 ## How review and delivery work
 
@@ -1294,7 +1309,7 @@ Before the next lesson, pick one deliverable from a current job and name its sur
 
 That means numbers over adjectives. "The dunning flow recovered 38 subscriptions in three weeks" beats any sentence built on "powerful" — and it is the sentence the client repeats to their board. When a result is not measurable yet, say what was done and when the measurement comes; honesty about timing reads as competence, because it is.
 
-It also means the client is the subject of the sentence. Their front desk gets its two hours back; their dispatcher runs the morning from one screen. Krysalis appears as the firm that did the work, not the hero of the story. Copy that centers us is copy the reader skips.
+It also means the client is the subject of the sentence. Their front desk stops re-keying the same form; their dispatcher runs the morning from one screen. Krysalis appears as the firm that did the work, not the hero of the story. Copy that centers us is copy the reader skips.
 
 A short list of words is banned outright because they promise nothing — the breathless adjectives every automation shop reaches for. If a draft leans on one, the draft does not know what the work actually did; go find out, then write that instead. Exclamation marks are banned in product and proposal copy for the same reason: a true sentence does not need one.
 
@@ -1381,6 +1396,11 @@ Practice: take the unclaimed booking card on the bounty board and write the thre
 ];
 
 export const EXTRA_LESSON_BODIES: Record<string, string> = {
+  "c-au-l1": "Every automation we ship that writes to a client's system of record goes through a shadow period, and the shadow period is in the contract, not just the plan. For an agreed window — four weeks on Tidegate, two on smaller scopes — the automation runs at full volume but writes to a holding area while the client's team keeps doing the work by hand. Both outputs exist side by side, and the period ends when the diff between them is boring.\n\nThe point is not that we doubt the code. The point is that the client's data has habits nobody documented, and the shadow period is where those habits surface at zero cost. On the Cassia reminder pipeline, the shadow window caught a clinic that recorded appointment times in local time while the other two used UTC offsets from their old system — a wrong reminder time, sent to a real patient, would have burned trust the project never gets back. As a shadow-period diff, it was a Tuesday-morning fix.\n\nRunning a shadow period well takes three things. First, a diffable target: write to a staging table, a parallel queue, anything the client's team can compare against the hand-keyed truth without tooling we have to build twice. Second, a named owner on the client side who reviews the diff on a schedule — Sam Okada reads the Tidegate staging view every morning, and that cadence is written into the engagement. Third, exit criteria agreed before the period starts: ours is typically a full week of zero unexplained differences at normal volume. \"It looks right\" is not an exit criterion; a number is.\n\nPrice the shadow period into the bid. It is real work — the diff tooling, the review cadence, the fixes it surfaces — and engagements that skip it pay for the same work later as incident response, at a worse hourly rate and with an audience.\n\nBefore the next lesson, find the shadow-period clause in the Tidegate proposal in the vault and note its exit criteria. Then write the one-sentence version you would put in your next bid.",
+  "c-au-l2": "Every classifier we ship is wrong sometimes, and the difference between an automation a client trusts and one they quietly turn off is what happens at that moment. The answer is always the same shape: an exception queue. When the system cannot act with confidence, it does not guess — it routes the item, with everything it knows, to a person equipped to decide.\n\nTreat the queue as a product surface, not an error log. The Cassia pilot routes unclassifiable faxes to a review list where the front desk sees the fax image, what the classifier thought, and one-click routing to the right clinic. Marcus is building the Tidegate version the same way: claim preview, the parser's best reading, accept into the record or correct it. A queue that takes longer to work than the original manual task is a failed design even if the classifier is excellent.\n\nThree rules keep queues honest. Confidence thresholds are explicit and tunable — the line between \"act\" and \"ask\" is a number in config, agreed with the client, not a vibe in the code. Every queue decision is logged with who decided and what they chose, because that log is both the audit trail the client's compliance people want and the training set for raising the threshold later. And queue volume is a metric the client sees: the Cassia pilot was scoped to send the long tail to manual routing, and saying so plainly in the proposal is why two misrouted faxes in week three read as the pilot working, not failing.\n\nThe deeper habit: design the failure path before the success path. The success path is usually the easy 84 percent — the two carrier formats, the typed cover sheets. The exception path is where the client learns whether the system respects their work. Get it right and the queue becomes the place where trust compounds, one well-handled edge case at a time.\n\nExercise: open the exception queue screenshots in the vault (Exception queue, first cut) and write down what a claims adjuster sees, in order. Then list what they would need that is missing. Bring the list to the job channel.",
+  "c-kv-l2": "Adjectives ask the reader to take our word for it. Numbers let the reader check. That is the whole logic of how Krysalis writes about results, and it changes what you collect during an engagement, not just what you write afterward.\n\nCompare the two ways to describe the same work. \"The dunning flow has dramatically improved subscription retention\" — nothing in that sentence can be checked, repeated to a colleague, or defended in a renewal conversation. \"The dunning flow recovered 38 of 61 failed payments in its first window\" — that sentence survives being forwarded. The client's wholesale manager can repeat it to the owner without us in the room, and it sounds exactly as good secondhand, which is the test that matters.\n\nNumbers also discipline us. To write the second sentence, somebody had to count recoveries against failed payments, which means somebody had to decide the measurement before the flow went live. Writing with numbers is downstream of scoping with numbers: the three counts that belong in every discovery summary — volume, touch, variance — become the before in every case study's before-and-after. If you reach the end of an engagement and there is no number to report, the miss happened months earlier, at scoping.\n\nTwo cautions. First, only use numbers you can stand behind: a count from a four-week window is a count from a four-week window, and saying \"first window\" costs nothing while inflating it would cost everything. Second, a number without a denominator is an adjective in disguise — \"38 recovered subscriptions\" means little until \"of 61 failed payments\" sits next to it. Percentages without bases are the same trick; prefer \"312 of 320 sample notices\" to \"97.5 percent accuracy\", because the reader can feel the size of the sample.\n\nExercise: take one engagement you know — the vault's case studies work — and write its result twice: once with adjectives, once with a counted claim and its denominator. Read both aloud. Then check whether the number you used exists anywhere a client could verify it. If it doesn't, that's the real finding.",
+  "c-rh-l2": "A handover note that lists systems but not people leaves the client knowing what was built and nobody to call. The second section of every Krysalis handover is an ownership map: each piece of the delivered work, the named person at the client who owns it now, and the named person at Krysalis who owned it last.\n\nOwnership means three specific things, and the note should say all three. Who operates it — the person who runs the weekly export, reads the queue, edits the price sheet. Who decides about it — the person with authority to change a threshold, approve a template edit, or accept a new carrier format. Who gets called when it misbehaves — which may be neither of the above, and at small clients is usually one overworked office manager whose name deserves to be written down with respect.\n\nThe map is only honest if it was true before the handover. The transfer of ownership happens during delivery, not on the last day: Felix edited the Ratio price sheet himself in week two, with Caleb watching, which is how we knew the system survived its real operator before review. If the first time the client's person touches the thing is after we leave, the handover note is recording a hope, not a fact. Build the operating habit during the engagement and the handover section writes itself.\n\nInclude reading habits, because they decide how the relationship ages. Curtis reads nothing until something breaks; Irene reads the weekly summary and answers the same day. Writing that down is not gossip — it is the difference between the next engagement starting warm and starting from zero. The account manager keeps this current, but the delivery team learns it first, and the handover note is where that knowledge stops being tribal.\n\nExercise: pick a job you are on now and draft its ownership map today, mid-engagement — operator, decider, first call, reading habits, four lines. The gaps you cannot fill are your remaining delivery work, listed by name.",
+  "c-sc-l2": "Every discovery summary at Krysalis carries the same three numbers: volume, touch, and variance. They are not paperwork; they are the scope. Get them right and the proposal nearly writes itself. Skip one and the engagement finds it later, at delivery prices.\n\nVolume is how often the painful thing happens — per day, per week, per renewal season. It sells the engagement, because volume times minutes is the client's cost in hours they can check against their own payroll. Halcyon's front desk losing two hours a day is a volume claim; so is Bellhaven's two office staff against ninety units. Always get volume from counting, not from the frustrated estimate in the first call — walk the desk, pull a week of the inbox, count the pile. Lena counted eleven manual steps at Tidegate because she stood next to the claims desk and watched, and that count became the spine of a 21,500.00 proposal nobody argued with.\n\nTouch is how many hands the painful thing passes through. Touch sizes the work, because every hand is an interface: a person to interview, a handoff to preserve or remove, an approval the automation must respect. A one-touch process is a parser; a four-touch process is a workflow with politics. Cassia's referral faxes looked like one problem until touch revealed three clinics with three routing habits — the same data, three owners.\n\nVariance is how many shapes the thing arrives in, and variance is where the risk lives. Two carrier formats covering 84 percent of Tidegate's volume is a variance finding; so is discovering that the remaining 16 percent is scanned PDFs. Variance decides what gets automated and what goes to the exception queue, and proposals that state that split plainly — we automate these shapes, a person handles those — survive contact with reality.\n\nExercise: take the unclaimed booking card on the bounty board and write the volume, touch, and variance questions you would ask in the discovery call — three of each. Compare with the account notes for a deal that closed. The overlap is the playbook.",
   "c-ts-l2": "Open the Northbeam dispatch repository and the folder layout already explains the system: `dispatch/` holds the load and driver types, the ingest that constructs them, and the fixtures that prove the ingest honest. Nothing about dispatch lives anywhere else. That is the house layout — a `types.ts` per domain, sitting beside the functions that produce the shape and the tests that exercise it.\n\nThe alternative is the central dump: a `types/index.ts` that every file imports from and nobody owns. Types far from their data drift, because the person changing the ingest does not see the type two folders away, and the person reading the type cannot see what actually constructs it. A grab-bag module also hides dependencies: when everything imports from one place, the import graph says nothing. When `billing/` has to reach into `dispatch/types` to get a `LoadRecord`, that line is a real dependency made visible, and the reviewer gets to ask whether billing should know about loads at all.\n\nDerive instead of restating. If the domain has a closed set of statuses, write the list once and let the type fall out of it:\n\n```ts\nconst LOAD_STATUSES = [\"unassigned\", \"assigned\", \"in_transit\", \"delivered\"] as const;\ntype LoadStatus = (typeof LOAD_STATUSES)[number];\n```\n\nNow the validator, the filter chips, and the type all read from one declaration, and adding a status is a one-line change the compiler propagates. The same instinct applies to config-shaped data: `satisfies` checks a literal against a contract without widening it, which keeps autocomplete working and the contract enforced.\n\nThe payoff shows up at bidding time. Northbeam phase two went on the board with the phase-one data model attached, and it drew four scoped bids — two of them from engineers who never touched phase one, neither of whom needed a walkthrough to land on a defensible number. The types were the map, and they were trustworthy because they lived where the data was made.\n\nBefore the next lesson: find one type in your current repo defined more than a folder away from the code that constructs it. Move it next to its constructor and let the broken imports show you who actually depends on the shape. The list is usually shorter than the central file implied.",
   "c-ts-l3": "Every escape hatch in TypeScript is a loan. `any`, `as`, the non-null `!`, `@ts-expect-error` — each one buys you a passing build now and bills someone later, with interest. On marketplace-staffed work the someone is usually not you: the next engineer on the account inherits the repo through a bid, not a briefing. What you silenced, they debug.\n\nSo the house prices the hatches explicitly. `any` does not pass review, full stop. It is not a type; it is an agreement to stop checking, and it spreads — one `any` parameter quietly turns every downstream value into `any` too. The honest version of the same move is `unknown` plus a narrowing function: the doubt stays, but it stays visible and stays contained.\n\n`as` is allowed only at a marked boundary where you can defend both sides — immediately after a validation that proves the shape, or inside a test building a fixture. An `as` in the middle of business logic means the types and the logic disagree and you sided against the compiler. The double cast, `as unknown as T`, is two hatches stacked; treat it as a flare, not a technique.\n\n`@ts-expect-error` carries a comment saying what is expected and when the line can come out — a library bug with the issue link, a migration with a date. `!` is acceptable only when the guarantee sits on the adjacent line; if you have to scroll to justify it, restructure instead.\n\nThere is one escape hatch we ship proudly, and it is instructive. When the Tidegate intake parser meets a scanned PDF it cannot read, it does not guess — it routes the notice to the exception queue, where a person decides. That is `unknown` as a product decision: doubt made visible, contained, and handed to someone equipped to resolve it. Your code should fail the same way. The expensive failures are never the loud ones; they are the confident wrong answers an `any` waved through.\n\nExercise: search your current project for `: any` and ` as ` and put each hit in one of three buckets — boundary, laziness, or latent bug. Bring the counts to the engineering channel; the buckets matter more than the totals.",
   "c-ts-l4": "Most engineering work here starts inside code you did not write. You bid into phase two of someone else's build, onto a pilot a previous job left behind, or against a client's existing system of record. Reading an unfamiliar codebase quickly and correctly is not a junior survival skill; it is the core competence the marketplace assumes.\n\nRead in this order. First, `tsconfig.json` and `package.json` — five minutes that calibrate everything after. Strict settings mean the types are load-bearing and you can navigate by them; loose settings mean the types are decoration and you verify by hand. The scripts block tells you the real entry points, which are not always the documented ones.\n\nSecond, find where data enters and where it leaves. Every system we ship is a pipe with a boundary at each end — a parser, an API route, an export, a render. Between the boundaries is transformation, and transformations are readable once you know both ends.\n\nThird, pick the central domain type — the `ClaimRecord`, the `LoadRecord` — and read outward from it. Go-to-definition and find-all-references are the map tools. The type's consumers tell you what the system actually does, as opposed to what the README remembers.\n\nFourth, read the fixtures and tests. Fixtures are the honest documentation — committed samples of what the data really looks like. Tests tell you what the last person was scared of, which is the most useful thing they left behind.\n\nFifth, run it before you change it. A build you have never seen green is a build you cannot trust red.\n\nPriya Raman's habit on the Tidegate kickoff is the standard to copy: before writing a line, she traced one carrier notice end to end — inbound email, parser, field map, staging row — reading every function it passed through. One record, fully followed, beats ten files skimmed.\n\nWhile you read, write down everything that surprises you. A surprise is either your misunderstanding or the repo's debt, and both lists are valuable: the first becomes your questions for the job channel, the second becomes review findings and, eventually, handover material.\n\nKeep the first change small. The first PR into an unfamiliar repo should be deliberate and almost trivial — a fixture added, a type tightened — because its real purpose is proving you can run, test, and ship the thing. Opening with a restructuring PR skips the part where the repo teaches you why it is shaped that way.\n\nExercise: take a repo you have not touched — the Northbeam phase-one model in the Commons works — and give yourself 45 minutes. Write five sentences: what it does, where data enters, the central type, the riskiest file, and one question for the last author. Then check them against the handover note, if one exists. The gaps run both ways.",

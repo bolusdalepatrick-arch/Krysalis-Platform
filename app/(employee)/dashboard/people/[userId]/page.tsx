@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
 import Eyebrow from "@/components/Eyebrow";
-import StatusBadge, { type StatusTone } from "@/components/StatusBadge";
+import StatusBadge from "@/components/StatusBadge";
+import { JOB_STATUS_LABEL, JOB_STATUS_TONE } from "@/components/jobStatus";
 import { formatDate, formatMoney } from "@/lib/format";
 import {
   BIDS,
@@ -12,20 +13,8 @@ import {
   accountById,
   jobById,
   personById,
-  type JobStatus,
 } from "@/lib/mock";
-
-/** XP amounts from the PRD 7.2 table; lib/xp.ts owns these from M1 onward. */
-const XP_JOB_COMPLETED = 120;
-const XP_BID_ACCEPTED = 40;
-
-const STATUS_BADGES: Record<JobStatus, { tone: StatusTone; label: string }> = {
-  OPEN: { tone: "neutral", label: "Open" },
-  ASSIGNED: { tone: "neutral", label: "Assigned" },
-  IN_PROGRESS: { tone: "info", label: "In progress" },
-  REVIEW: { tone: "warn", label: "Review" },
-  COMPLETED: { tone: "ok", label: "Completed" },
-};
+import { XP_AMOUNTS } from "@/lib/xp";
 
 function departmentName(id: string): string {
   return DEPARTMENTS.find((d) => d.id === id)?.name ?? "—";
@@ -56,13 +45,13 @@ export default async function PersonPage({
 
   const ledger = [
     ...completed.map((j) => ({
-      amount: XP_JOB_COMPLETED,
+      amount: XP_AMOUNTS.JOB_COMPLETED,
       reason: "Job completed",
       subject: j.title,
       at: j.completedAt ?? "",
     })),
     ...acceptedBids.map((b) => ({
-      amount: XP_BID_ACCEPTED,
+      amount: XP_AMOUNTS.BID_ACCEPTED,
       reason: "Bid accepted",
       subject: jobById(b.jobId)?.title ?? b.jobId,
       at: b.createdAt,
@@ -161,8 +150,8 @@ export default async function PersonPage({
                   >
                     {job.title}
                   </Link>
-                  <StatusBadge tone={STATUS_BADGES[job.status].tone}>
-                    {STATUS_BADGES[job.status].label}
+                  <StatusBadge tone={JOB_STATUS_TONE[job.status]}>
+                    {JOB_STATUS_LABEL[job.status]}
                   </StatusBadge>
                 </li>
               ))}

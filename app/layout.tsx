@@ -24,7 +24,13 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0C100D",
+  // Browser-chrome color only — Viewport.themeColor cannot read CSS custom
+  // properties, so these two literals mirror the section 5.2 base tokens.
+  // This is the one sanctioned hex outside globals.css (docs/ui-contract.md).
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#0C100D" },
+    { media: "(prefers-color-scheme: light)", color: "#F6F4FA" },
+  ],
   width: "device-width",
   initialScale: 1,
 };

@@ -214,6 +214,22 @@ async function main() {
     })),
   });
 
+  // An account exists from its first recorded touch: its earliest deal or
+  // booking card, else the firm's pre-window history.
+  const accountCreatedAt = (accountId: string, accountName: string): Date => {
+    const candidates = [
+      ...DEALS.filter((deal) => deal.accountId === accountId).map((deal) =>
+        d(`${deal.createdAt}T09:00:00`).getTime(),
+      ),
+      ...BOOKING_CARDS.filter((card) => card.company === accountName).map((card) =>
+        d(card.submittedAt).getTime(),
+      ),
+    ];
+    return candidates.length > 0
+      ? new Date(Math.min(...candidates))
+      : d("2025-06-02T09:00:00");
+  };
+
   await prisma.account.createMany({
     data: ACCOUNTS.map((a) => ({
       id: a.id,
@@ -222,7 +238,7 @@ async function main() {
       website: a.website ?? null,
       status: a.status,
       notes: a.notes,
-      createdAt: d("2025-06-02T09:00:00"),
+      createdAt: accountCreatedAt(a.id, a.name),
     })),
   });
 
@@ -333,7 +349,12 @@ async function main() {
         wonAt: deal.wonAt ? d(`${deal.wonAt}T10:08:00`) : null,
         lostAt: deal.lostAt ? d(`${deal.lostAt}T11:42:00`) : null,
         lostReason: deal.lostReason ?? null,
-        createdAt: d(`${deal.createdAt}T09:00:00`),
+        // Deals opened from a claimed booking card exist from the claim
+        // itself (PRD 7.12); manual deals from the working morning.
+        createdAt: (() => {
+          const card = BOOKING_CARDS.find((c) => c.dealId === deal.id);
+          return card?.claimedAt ? d(card.claimedAt) : d(`${deal.createdAt}T09:00:00`);
+        })(),
       },
     });
     await prisma.dealActivity.createMany({
@@ -372,6 +393,13 @@ async function main() {
   for (const job of JOBS) {
     const jobBids = BIDS.filter((b) => b.jobId === job.id);
     const earliestBid = jobBids.map((b) => b.createdAt).sort()[0];
+    // A converted job cannot predate the deal it converted from (PRD 7.11).
+    const linkedDeal = job.dealId ? DEALS.find((deal) => deal.id === job.dealId) : undefined;
+    let createdAt = earliestBid ? addDays(earliestBid, -5) : d("2026-05-01T09:00:00");
+    if (linkedDeal?.wonAt) {
+      const wonMoment = d(`${linkedDeal.wonAt}T11:00:00`);
+      if (createdAt < wonMoment) createdAt = wonMoment;
+    }
     await prisma.job.create({
       data: {
         id: job.id,
@@ -385,7 +413,7 @@ async function main() {
         accountId: job.accountId,
         dealId: job.dealId ?? null,
         departmentId: job.departmentId,
-        createdAt: earliestBid ? addDays(earliestBid, -5) : d("2026-05-01T09:00:00"),
+        createdAt,
         dueAt: job.dueAt ? d(`${job.dueAt}T17:00:00`) : null,
         completedAt: job.completedAt ? d(`${job.completedAt}T17:00:00`) : null,
       },
@@ -407,6 +435,17 @@ async function main() {
   });
 
   // Channels and messages (the deterministic Shadow draft included).
+  // A channel exists just before its first message; department and firm
+  // channels date from the firm's pre-window history.
+  const messages = buildMessages();
+  const channelCreatedAt = (channelId: string, kind: string): Date => {
+    if (kind === "DEPARTMENT" || kind === "FIRM") return d("2025-06-02T09:00:00");
+    const first = messages
+      .filter((m) => m.channelId === channelId)
+      .map((m) => m.at)
+      .sort()[0];
+    return first ? addDays(first, -1) : d("2026-05-01T09:00:00");
+  };
   await prisma.channel.createMany({
     data: CHANNELS.map((channel) => ({
       id: channel.id,
@@ -415,11 +454,11 @@ async function main() {
       departmentId: channel.departmentId ?? null,
       jobId: channel.jobId ?? null,
       accountId: channel.accountId ?? null,
-      createdAt: d("2025-06-02T09:00:00"),
+      createdAt: channelCreatedAt(channel.id, channel.kind),
     })),
   });
   await prisma.message.createMany({
-    data: buildMessages().map((m) => ({
+    data: messages.map((m) => ({
       id: m.id,
       channelId: m.channelId,
       senderId: m.senderId,

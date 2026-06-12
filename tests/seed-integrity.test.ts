@@ -104,6 +104,35 @@ describe("seed integrity", () => {
       where: { memberId: "u-noor" },
     });
     expect(noorCompletions).toBe(1);
+    // "Nothing posted yet" (PRD section 10) — her welcome checklist must
+    // demo mid-progress, so she has no messages and no forum posts.
+    expect(await prisma.message.count({ where: { senderId: "u-noor" } })).toBe(0);
+    expect(await prisma.forumPost.count({ where: { authorId: "u-noor" } })).toBe(0);
+  });
+
+  it("every outline course ships at least two finished lessons", async () => {
+    const courses = await prisma.course.findMany({
+      include: { modules: { include: { lessons: true } } },
+    });
+    for (const course of courses) {
+      const finished = course.modules
+        .flatMap((m) => m.lessons)
+        .filter((lesson) => lesson.body.trim().length > 0).length;
+      expect(finished, `${course.title} has too few finished lessons`).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it("a converted job never predates its deal's win", async () => {
+    const linked = await prisma.job.findMany({
+      where: { dealId: { not: null } },
+      include: { deal: true },
+    });
+    for (const job of linked) {
+      expect(
+        job.deal?.wonAt && job.createdAt >= job.deal.wonAt,
+        `${job.title} predates its won deal`,
+      ).toBe(true);
+    }
   });
 
   it("the pipeline covers every stage per section 10", async () => {

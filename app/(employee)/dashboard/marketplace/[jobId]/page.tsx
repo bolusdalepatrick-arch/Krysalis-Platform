@@ -7,7 +7,7 @@ import { BIDS, DEPARTMENTS, accountById, jobById } from "@/lib/mock";
 import BidTable from "../components/BidTable";
 import EconomicsStrip from "../components/EconomicsStrip";
 import JobFacts from "../components/JobFacts";
-import { JOB_STATUS_LABEL, JOB_STATUS_TONE } from "../components/job-status";
+import { JOB_STATUS_LABEL, JOB_STATUS_TONE } from "@/components/jobStatus";
 
 /** Job detail (PRD 7.1): serif description, economics strip, bid table,
  *  and the facts rail — workers, channel, dates, delivered files. */

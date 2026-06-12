@@ -5,6 +5,7 @@ import AvatarBadge from "@/components/AvatarBadge";
 import ChrysalisGlyph from "@/components/ChrysalisGlyph";
 import BookingCardPanel from "@/components/crm/BookingCardPanel";
 import { formatChatTime, formatDate, formatDayContext, formatMoney } from "@/lib/format";
+import { getSessionPersona } from "@/lib/auth";
 import {
   BOOKING_CARDS,
   CHANNELS,
@@ -13,6 +14,7 @@ import {
   JOBS,
   MESSAGES,
   accountById,
+  jobById,
   personById,
   type DealStage,
   type MockChannel,
@@ -37,11 +39,26 @@ function channelById(id: string): MockChannel | undefined {
 }
 
 /** The Today view (PRD section 6): one composed page of dense blocks, each
- *  linking into its deep route. The graph stays on its own route. */
-export default function TodayPage() {
+ *  linking into its deep route, scoped to the viewer — open work in their
+ *  department, their pipeline, drafts they can approve. */
+export default async function TodayPage() {
   const now = new Date();
-  const openJobs = JOBS.filter((j) => j.status === "OPEN");
-  const drafts = MESSAGES.filter((m) => m.isShadowDraft);
+  const persona = await getSessionPersona();
+  const viewer = persona ? personById(persona.id) : undefined;
+  const isAdmin = persona?.role === "ADMIN";
+  const canApproveAll = isAdmin || persona?.role === "MODERATOR";
+
+  const openJobs = JOBS.filter(
+    (j) =>
+      j.status === "OPEN" && (!viewer?.departmentId || j.departmentId === viewer.departmentId),
+  );
+  const drafts = MESSAGES.filter((m) => {
+    if (!m.isShadowDraft) return false;
+    if (canApproveAll) return true;
+    const job = channelById(m.channelId)?.jobId;
+    return job ? (jobById(job)?.workerIds ?? []).includes(persona?.id ?? "") : false;
+  });
+  const myDeals = isAdmin ? DEALS : DEALS.filter((deal) => deal.ownerId === persona?.id);
   const unclaimed = BOOKING_CARDS.filter((c) => c.status === "UNCLAIMED");
   const newestCard = [...unclaimed].sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))[0];
   const recent = MESSAGES.filter((m) => !m.isShadowDraft)
@@ -58,6 +75,12 @@ export default function TodayPage() {
             <Eyebrow as="h2">Open work</Eyebrow>
             <span className="figure text-xs text-muted">{openJobs.length}</span>
           </div>
+          {openJobs.length === 0 ? (
+            <p className="border-b border-line px-4 py-3 text-sm text-secondary">
+              No open postings in your department. New client work appears here
+              as contracts are signed.
+            </p>
+          ) : null}
           <ul>
             {openJobs.map((job) => (
               <li key={job.id} className="border-b border-line">
@@ -126,8 +149,11 @@ export default function TodayPage() {
           </section>
 
           <section className="overflow-hidden rounded-m border border-line bg-surface">
-            <div className="border-b border-line px-4 py-3">
+            <div className="flex items-baseline justify-between border-b border-line px-4 py-3">
               <Eyebrow as="h2">Pipeline</Eyebrow>
+              <span className="figure text-xs text-muted">
+                {isAdmin ? "all owners" : "your deals"}
+              </span>
             </div>
             <Link href="/dashboard/crm" className="grid grid-cols-6 divide-x divide-line hover:bg-raised">
               {STAGES.map(({ stage, label }) => (
@@ -136,7 +162,7 @@ export default function TodayPage() {
                     {label}
                   </Eyebrow>
                   <span className="figure mt-1 block text-lg text-primary">
-                    {DEALS.filter((d) => d.stage === stage).length}
+                    {myDeals.filter((d) => d.stage === stage).length}
                   </span>
                 </span>
               ))}
@@ -169,6 +195,12 @@ export default function TodayPage() {
           <div className="border-b border-line px-4 py-3">
             <Eyebrow as="h2">Recent activity</Eyebrow>
           </div>
+          {recent.length === 0 ? (
+            <p className="px-4 py-3 text-sm text-secondary">
+              Nothing yet today. Channel and thread activity across the firm
+              shows up here as it happens.
+            </p>
+          ) : null}
           <ul>
             {recent.map((message) => {
               const sender = personById(message.senderId);

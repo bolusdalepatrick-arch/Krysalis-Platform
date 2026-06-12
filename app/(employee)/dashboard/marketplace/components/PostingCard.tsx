@@ -5,7 +5,7 @@ import { formatDate } from "@/lib/format";
 import { DEPARTMENTS, accountById } from "@/lib/mock";
 import type { MockJob } from "@/lib/mock";
 import EconomicsStrip from "./EconomicsStrip";
-import { JOB_STATUS_LABEL, JOB_STATUS_TONE } from "./job-status";
+import { JOB_STATUS_LABEL, JOB_STATUS_TONE } from "@/components/jobStatus";
 
 /** A marketplace posting card (PRD 7.1) — one of the two places cards are
  *  allowed (PRD 5.1.9). */

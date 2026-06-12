@@ -1,4 +1,5 @@
 import { DEPARTMENTS as SEED_DEPARTMENTS, USERS } from "../../prisma/seed-data";
+import { TIERS } from "../xp";
 import type { MockDepartment, MockPerson } from "./types";
 
 /** People and departments, re-exported from the canonical seed narrative
@@ -7,13 +8,9 @@ import type { MockDepartment, MockPerson } from "./types";
 export const DEPARTMENTS: MockDepartment[] = SEED_DEPARTMENTS;
 export const PEOPLE: MockPerson[] = USERS;
 
-export const TIER_NAMES: Record<number, string> = {
-  1: "Larva",
-  2: "Instar",
-  3: "Chrysalis",
-  4: "Eclosion",
-  5: "Imago",
-};
+export const TIER_NAMES: Record<number, string> = Object.fromEntries(
+  TIERS.map((t) => [t.level, t.name]),
+);
 
 export function personById(id: string): MockPerson | undefined {
   return PEOPLE.find((p) => p.id === id);

@@ -1,16 +1,8 @@
 import Link from "next/link";
 import StatusBadge from "@/components/StatusBadge";
-import type { StatusTone } from "@/components/StatusBadge";
+import { JOB_STATUS_LABEL, JOB_STATUS_TONE } from "@/components/jobStatus";
 import { formatDate, formatMoney } from "@/lib/format";
-import type { JobStatus, MockJob } from "@/lib/mock";
-
-const JOB_TONE: Record<JobStatus, StatusTone> = {
-  OPEN: "info",
-  ASSIGNED: "neutral",
-  IN_PROGRESS: "accent",
-  REVIEW: "warn",
-  COMPLETED: "ok",
-};
+import type { MockJob } from "@/lib/mock";
 
 /** The engagements table on an account page (PRD 7.11) — jobs, once any exist. */
 export default function AccountJobsTable({ jobs }: { jobs: MockJob[] }) {
@@ -36,8 +28,8 @@ export default function AccountJobsTable({ jobs }: { jobs: MockJob[] }) {
               </Link>
             </td>
             <td className="pr-4">
-              <StatusBadge tone={JOB_TONE[j.status]}>
-                {j.status.replace("_", " ")}
+              <StatusBadge tone={JOB_STATUS_TONE[j.status]}>
+                {JOB_STATUS_LABEL[j.status]}
               </StatusBadge>
             </td>
             <td className="pr-4 text-right">

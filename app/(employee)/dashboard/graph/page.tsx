@@ -22,9 +22,10 @@ export default function GraphPage() {
       <div className="px-6 py-6">
         <div className="max-w-2xl rounded-m border border-line bg-surface p-6">
           <p className="text-md text-secondary">
-            The map is derived at request time from real relations — department
-            membership, job assignments, commissioned accounts, delivered files
-            — and renders here once the data layer lands.
+            The map draws itself from real relations — department membership,
+            job assignments, commissioned accounts, delivered files. Nothing
+            is curated by hand: complete a job or file an asset and the graph
+            reflects it. Delivered work appears here as it accumulates.
           </p>
           <Eyebrow as="h2" className="mt-6">
             Legend
