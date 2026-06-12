@@ -58,7 +58,7 @@ export function validateSplit(
   }
   const remainder = poolRemainder(workerPool, acceptedSplits);
   if (split.gt(remainder)) {
-    return `Couldn't place this bid. ${remainder.toFixed(2)} of the pool is unallocated; propose at most that.`;
+    return `That split exceeds the pool. ${remainder.toFixed(2)} is unallocated; propose at most that.`;
   }
   return null;
 }

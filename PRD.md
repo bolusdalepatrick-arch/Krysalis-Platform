@@ -343,7 +343,9 @@ masthead (`2.25rem`).
 `letter-spacing: 0.08em`, `--color-text-muted`, mono face. They caption every
 panel like a specimen label ("OPEN POSTINGS", "WORKER POOL", "FIELD NOTES").
 ### 5.4 Space, radius, line
-- 4px base unit. Component padding from `{8, 12, 16, 24, 32}`.
+- 4px base unit. Component padding from `{8, 12, 16, 24, 32}`. Dense rail
+  rows may use 10px horizontal padding; all other component padding stays on
+  the set (ruling, post-M1).
 - Density: employee-hub table rows 36px, list rows 44px; client portal rows 52px.
 - Radii: `--radius-s: 4px` (inputs, tags, buttons), `--radius-m: 8px` (cards,
   panels), `--radius-l: 12px` (modals, the portal masthead). Pills only for the
@@ -406,8 +408,9 @@ Shadow produced. It is the product's only piece of custom iconography.
 ### 5.10 Post-milestone design audit
 After every UI milestone, run this check against live screens and include the
 result in the milestone report:
-1. Grep components for hex values, Tailwind palette classes, emoji codepoints,
-   and banned vocabulary — all must return zero.
+1. Grep app/, components/, lib/, prisma/ for hex values, Tailwind palette
+   classes, emoji codepoints, and banned vocabulary — all must return zero.
+   Rule documents (PRD.md, docs/ui-contract.md) are exempt (ruling, post-M1).
 2. Screenshot dashboard, a job detail, the pipeline, a lesson, a channel, and
    both portal compositions in their themes. Confirm: no gradients outside 5.9,
    hairline structure intact, mono numerals aligned, eyebrows present, focus
@@ -537,7 +540,8 @@ automatically when a job becomes ASSIGNED, archived visually when COMPLETED),
 DM (explicit `ChannelMember` rows), FIRM (firm-wide; membership derived as
 every EMPLOYEE/MODERATOR/ADMIN), and ACCOUNT (one per ACTIVE account, created
 at conversion — the client-facing thread, 7.8; membership derived as the
-account's portal users + the owning employee + admins). One FIRM channel ships
+account's portal users + the owning employee + workers on the account's
+non-COMPLETED jobs + admins — ruling, post-M1). One FIRM channel ships
 in V2: `#new-business`, home of the Bounty Board (7.12) — booking cards render
 inline there as structured messages. Membership for DEPARTMENT/JOB is likewise
 derived (department members; assigned workers + admins). ACCOUNT threads list
@@ -556,7 +560,7 @@ machine, not a chat gimmick:
   job data — status, % of pool allocated, days to due date, latest delivered
   assets, and the last 10 messages — and assembles a 3–5 sentence progress update
   from composed sentence templates. Same input, same output. No network.
-- `lib/shadow/anthropic.ts` (optional, M7 stretch): if `ANTHROPIC_API_KEY` is set,
+- `lib/shadow/anthropic.ts` (optional, M8 stretch): if `ANTHROPIC_API_KEY` is set,
   a model-backed adapter replaces the deterministic one behind the same interface.
   The build must never require the key.
 Flow: in a JOB channel, workers see a "Draft update" affordance → action creates a

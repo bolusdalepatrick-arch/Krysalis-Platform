@@ -2,23 +2,31 @@ import Link from "next/link";
 import AvatarBadge from "@/components/AvatarBadge";
 import Eyebrow from "@/components/Eyebrow";
 import { formatDate } from "@/lib/format";
-import { CHANNELS, VAULT_ASSETS, personById } from "@/lib/mock";
-import type { MockJob, MockPerson } from "@/lib/mock";
 
 const EM_DASH = "—";
 
 /** Right-rail facts for a job (PRD 7.1): workers, channel link, dates, and
  *  delivered vault assets, each under a specimen-label eyebrow. */
-export default function JobFacts({ job }: { job: MockJob }) {
-  const workers = job.workerIds
-    .map((id) => personById(id))
-    .filter((p): p is MockPerson => p !== undefined);
-  const channel = CHANNELS.find((c) => c.kind === "JOB" && c.jobId === job.id);
-  const files = VAULT_ASSETS.filter((a) => a.jobId === job.id);
-
+export default function JobFacts({
+  workers,
+  channel,
+  files,
+  dueAt,
+  completedAt,
+  children,
+}: {
+  workers: { id: string; name: string }[];
+  channel: { id: string; name: string } | null;
+  files: { id: string; title: string; fileType: string }[];
+  dueAt: string | null;
+  completedAt: string | null;
+  children?: React.ReactNode;
+}) {
   return (
     <aside className="w-72 shrink-0">
       <div className="space-y-5 rounded-m border border-line bg-surface p-4">
+        {children}
+
         <section>
           <Eyebrow as="h2">Workers</Eyebrow>
           {workers.length > 0 ? (
@@ -54,23 +62,19 @@ export default function JobFacts({ job }: { job: MockJob }) {
           )}
         </section>
 
-        {job.dueAt || !job.completedAt ? (
+        {!completedAt ? (
           <section>
             <Eyebrow as="h2">Due</Eyebrow>
             <p className="figure mt-1.5 text-sm text-primary">
-              {job.dueAt ? formatDate(job.dueAt) : EM_DASH}
+              {dueAt ? formatDate(dueAt) : EM_DASH}
             </p>
           </section>
-        ) : null}
-
-        {job.completedAt ? (
+        ) : (
           <section>
             <Eyebrow as="h2">Completed</Eyebrow>
-            <p className="figure mt-1.5 text-sm text-primary">
-              {formatDate(job.completedAt)}
-            </p>
+            <p className="figure mt-1.5 text-sm text-primary">{formatDate(completedAt)}</p>
           </section>
-        ) : null}
+        )}
 
         <section>
           <Eyebrow as="h2">Delivered files</Eyebrow>

@@ -1,50 +1,43 @@
-import { notFound } from "next/navigation";
-import Eyebrow from "@/components/Eyebrow";
+import { notFound, redirect } from "next/navigation";
 import Markdown from "@/components/Markdown";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
-import { BIDS, DEPARTMENTS, accountById, jobById } from "@/lib/mock";
-import BidTable from "../components/BidTable";
+import { getSessionUser } from "@/lib/auth";
+import { jobDetail } from "@/lib/queries/marketplace";
+import BidsPanel from "../components/BidsPanel";
 import EconomicsStrip from "../components/EconomicsStrip";
 import JobFacts from "../components/JobFacts";
+import StatusActions from "../components/StatusActions";
 import { JOB_STATUS_LABEL, JOB_STATUS_TONE } from "@/components/jobStatus";
 
-/** Job detail (PRD 7.1): serif description, economics strip, bid table,
- *  and the facts rail — workers, channel, dates, delivered files. */
+/** Job detail (PRD 7.1): serif description, economics strip, the live bid
+ *  table, the status machine's controls, and the facts rail. */
 export default async function JobDetailPage({
   params,
 }: {
   params: Promise<{ jobId: string }>;
 }) {
   const { jobId } = await params;
-  const job = jobById(jobId);
-  if (!job) notFound();
+  const viewer = await getSessionUser();
+  if (!viewer) redirect("/login");
 
-  const department = DEPARTMENTS.find((d) => d.id === job.departmentId);
-  const account = accountById(job.accountId);
-  const bids = BIDS.filter((b) => b.jobId === job.id);
+  const detail = await jobDetail(jobId);
+  if (!detail) notFound();
+  const { job, bids, workers, channel, files, poolRemainder } = detail;
+
+  const isWorker = workers.some((w) => w.id === viewer.id);
+  const isAdmin = viewer.role === "ADMIN";
 
   return (
     <div>
       <PageHeader
-        eyebrow={`${department?.name ?? "—"} · ${account?.name ?? "—"}`}
+        eyebrow={`${job.departmentName} · ${job.accountName}`}
         title={job.title}
         meta={job.brief}
         actions={
-          <>
-            <StatusBadge tone={JOB_STATUS_TONE[job.status]}>
-              {JOB_STATUS_LABEL[job.status]}
-            </StatusBadge>
-            {job.status === "OPEN" ? (
-              <button
-                type="button"
-                disabled
-                className="h-8 rounded-s bg-accent px-3 text-sm font-medium text-accent-ink disabled:opacity-60"
-              >
-                Place bid
-              </button>
-            ) : null}
-          </>
+          <StatusBadge tone={JOB_STATUS_TONE[job.status]}>
+            {JOB_STATUS_LABEL[job.status]}
+          </StatusBadge>
         }
       />
       <div className="flex items-start gap-6 px-6 py-6">
@@ -57,20 +50,29 @@ export default async function JobDetailPage({
           ) : (
             <p className="prose-serif text-secondary">{job.brief}</p>
           )}
-          <section>
-            <Eyebrow as="h2" className="mb-2">
-              Bids
-            </Eyebrow>
-            {bids.length > 0 ? (
-              <BidTable bids={bids} />
-            ) : (
-              <p className="text-sm text-secondary">
-                No bids yet. Bids placed while the posting is open appear here.
-              </p>
-            )}
-          </section>
+          <BidsPanel
+            jobId={job.id}
+            jobStatus={job.status}
+            workerPool={job.workerPool}
+            poolRemainder={poolRemainder}
+            viewer={{ id: viewer.id, name: viewer.name, role: viewer.role }}
+            bids={bids}
+          />
         </div>
-        <JobFacts job={job} />
+        <JobFacts
+          workers={workers}
+          channel={channel}
+          files={files}
+          dueAt={job.dueAt}
+          completedAt={job.completedAt}
+        >
+          <StatusActions
+            jobId={job.id}
+            status={job.status}
+            isWorker={isWorker}
+            isAdmin={isAdmin}
+          />
+        </JobFacts>
       </div>
     </div>
   );

@@ -1,8 +1,8 @@
-import { DEPARTMENTS, accountById } from "@/lib/mock";
-import type { MockChannel } from "@/lib/mock";
+import type { ChannelKind } from "@prisma/client";
 
-/** Header and audience copy for a channel, derived from its kind (PRD 7.3).
- *  The audience phrase feeds both the header meta and the empty state. */
+/** Header and audience copy for a channel, derived from its kind (PRD 7.3,
+ *  membership as amended post-M1). The audience phrase feeds both the
+ *  header meta and the empty state. */
 export interface ChannelInfo {
   kindLabel: string;
   title: string;
@@ -11,11 +11,15 @@ export interface ChannelInfo {
   composerPlaceholder: string;
 }
 
-export function channelInfo(channel: MockChannel): ChannelInfo {
+export function channelInfo(channel: {
+  kind: ChannelKind;
+  name: string;
+  departmentName: string | null;
+  accountName: string | null;
+}): ChannelInfo {
   switch (channel.kind) {
     case "DEPARTMENT": {
-      const dept = DEPARTMENTS.find((d) => d.id === channel.departmentId);
-      const deptName = dept?.name ?? channel.name;
+      const deptName = channel.departmentName ?? channel.name;
       return {
         kindLabel: "Department channel",
         title: `#${channel.name}`,
@@ -28,8 +32,8 @@ export function channelInfo(channel: MockChannel): ChannelInfo {
       return {
         kindLabel: "Job channel",
         title: `#${channel.name}`,
-        meta: "Visible to the assigned workers and admins.",
-        audience: "the assigned workers and admins",
+        meta: "Visible to the assigned workers, moderators, and admins.",
+        audience: "the assigned workers, moderators, and admins",
         composerPlaceholder: `Message #${channel.name}`,
       };
     case "FIRM":
@@ -40,13 +44,21 @@ export function channelInfo(channel: MockChannel): ChannelInfo {
         audience: "the whole firm",
         composerPlaceholder: `Message #${channel.name}`,
       };
+    case "DM":
+      return {
+        kindLabel: "Direct messages",
+        title: channel.name,
+        meta: "Visible to its members.",
+        audience: "its members",
+        composerPlaceholder: `Message ${channel.name}`,
+      };
     case "ACCOUNT": {
-      const accountName = accountById(channel.accountId ?? "")?.name ?? channel.name;
+      const accountName = channel.accountName ?? channel.name;
       return {
         kindLabel: "Client thread",
         title: accountName,
-        meta: `Shared with ${accountName} — visible to their portal users, the account owner, and admins.`,
-        audience: `${accountName}'s portal users, the account owner, and admins`,
+        meta: `Shared with ${accountName} — visible to their portal users, the account owner, the team on their active work, and admins.`,
+        audience: `${accountName}'s portal users, the account owner, the team on their active work, and admins`,
         composerPlaceholder: `Message ${accountName}`,
       };
     }

@@ -1,6 +1,9 @@
 import PageHeader from "@/components/PageHeader";
-import { DEPARTMENTS, JOBS } from "@/lib/mock";
+import { getSessionUser } from "@/lib/auth";
+import { boardJobs, marketplaceFormOptions } from "@/lib/queries/marketplace";
+import { prisma } from "@/lib/db";
 import MarketplaceFilters from "./components/MarketplaceFilters";
+import NewPostingPanel from "./components/NewPostingPanel";
 import PostingCard from "./components/PostingCard";
 import { DEFAULT_DEPARTMENT, DEFAULT_STATUS, STATUS_FILTERS } from "./components/filters";
 
@@ -11,19 +14,23 @@ export default async function MarketplacePage({
 }: {
   searchParams: Promise<{ status?: string; department?: string }>;
 }) {
-  const params = await searchParams;
+  const [params, viewer, departments] = await Promise.all([
+    searchParams,
+    getSessionUser(),
+    prisma.department.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+  ]);
   const statusFilter =
     STATUS_FILTERS.find((f) => f.value === (params.status ?? DEFAULT_STATUS)) ??
     STATUS_FILTERS.find((f) => f.value === DEFAULT_STATUS)!;
-  const department =
-    DEPARTMENTS.find((d) => d.id === params.department) ?? null;
+  const department = departments.find((d) => d.id === params.department) ?? null;
 
-  const jobs = JOBS.filter(
-    (j) =>
-      (statusFilter.status === null || j.status === statusFilter.status) &&
-      (department === null || j.departmentId === department.id),
-  );
-  const openCount = JOBS.filter((j) => j.status === "OPEN").length;
+  const { jobs, openCount, totalCount } = await boardJobs({
+    status: statusFilter.status ?? undefined,
+    departmentId: department?.id,
+  });
+
+  const isAdmin = viewer?.role === "ADMIN";
+  const formOptions = isAdmin ? await marketplaceFormOptions() : null;
 
   const emptyScope = department ? ` in ${department.name}` : "";
 
@@ -32,11 +39,15 @@ export default async function MarketplacePage({
       <PageHeader
         eyebrow="Marketplace"
         title="Open postings"
-        meta={<span className="figure">{`${openCount} open · ${JOBS.length} total`}</span>}
+        meta={<span className="figure">{`${openCount} open · ${totalCount} total`}</span>}
       />
+      {formOptions ? (
+        <NewPostingPanel accounts={formOptions.accounts} departments={formOptions.departments} />
+      ) : null}
       <MarketplaceFilters
         status={statusFilter.value}
         department={department?.id ?? DEFAULT_DEPARTMENT}
+        departments={departments}
       />
       {jobs.length > 0 ? (
         <div className="grid grid-cols-2 gap-4 px-6 py-5">

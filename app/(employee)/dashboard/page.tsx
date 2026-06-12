@@ -1,24 +1,15 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
 import Eyebrow from "@/components/Eyebrow";
 import AvatarBadge from "@/components/AvatarBadge";
 import ChrysalisGlyph from "@/components/ChrysalisGlyph";
 import BookingCardPanel from "@/components/crm/BookingCardPanel";
+import { getSessionUser } from "@/lib/auth";
 import { formatChatTime, formatDate, formatDayContext, formatMoney } from "@/lib/format";
-import { getSessionPersona } from "@/lib/auth";
-import {
-  BOOKING_CARDS,
-  CHANNELS,
-  DEALS,
-  DEPARTMENTS,
-  JOBS,
-  MESSAGES,
-  accountById,
-  jobById,
-  personById,
-  type DealStage,
-  type MockChannel,
-} from "@/lib/mock";
+import { openWork } from "@/lib/queries/marketplace";
+import { pendingDrafts, recentActivity } from "@/lib/queries/channels";
+import { BOOKING_CARDS, DEALS, type DealStage } from "@/lib/mock";
 
 const STAGES: { stage: DealStage; label: string }[] = [
   { stage: "INBOUND", label: "Inbound" },
@@ -34,37 +25,26 @@ function excerpt(text: string, max: number): string {
   return `${text.slice(0, max).trimEnd()}…`;
 }
 
-function channelById(id: string): MockChannel | undefined {
-  return CHANNELS.find((c) => c.id === id);
-}
-
 /** The Today view (PRD section 6): one composed page of dense blocks, each
  *  linking into its deep route, scoped to the viewer — open work in their
- *  department, their pipeline, drafts they can approve. */
+ *  department, their pipeline, drafts they can approve. Marketplace and
+ *  channel blocks read the database; the pipeline block reads the M0 mock
+ *  until the CRM lands on data (M5). */
 export default async function TodayPage() {
   const now = new Date();
-  const persona = await getSessionPersona();
-  const viewer = persona ? personById(persona.id) : undefined;
-  const isAdmin = persona?.role === "ADMIN";
-  const canApproveAll = isAdmin || persona?.role === "MODERATOR";
+  const viewer = await getSessionUser();
+  if (!viewer) redirect("/login");
 
-  const openJobs = JOBS.filter(
-    (j) =>
-      j.status === "OPEN" && (!viewer?.departmentId || j.departmentId === viewer.departmentId),
-  );
-  const drafts = MESSAGES.filter((m) => {
-    if (!m.isShadowDraft) return false;
-    if (canApproveAll) return true;
-    const job = channelById(m.channelId)?.jobId;
-    return job ? (jobById(job)?.workerIds ?? []).includes(persona?.id ?? "") : false;
-  });
-  const myDeals = isAdmin ? DEALS : DEALS.filter((deal) => deal.ownerId === persona?.id);
+  const [openJobs, drafts, recent] = await Promise.all([
+    openWork(viewer.departmentId),
+    pendingDrafts(viewer),
+    recentActivity(viewer, 8),
+  ]);
+
+  const isAdmin = viewer.role === "ADMIN";
+  const myDeals = isAdmin ? DEALS : DEALS.filter((deal) => deal.ownerId === viewer.id);
   const unclaimed = BOOKING_CARDS.filter((c) => c.status === "UNCLAIMED");
   const newestCard = [...unclaimed].sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))[0];
-  const recent = MESSAGES.filter((m) => !m.isShadowDraft)
-    .slice()
-    .sort((a, b) => b.at.localeCompare(a.at))
-    .slice(0, 8);
 
   return (
     <>
@@ -96,8 +76,7 @@ export default async function TodayPage() {
                   </span>
                   <span className="mt-0.5 flex items-baseline justify-between gap-4 text-xs text-muted">
                     <span className="truncate">
-                      {accountById(job.accountId)?.name} ·{" "}
-                      {DEPARTMENTS.find((d) => d.id === job.departmentId)?.name}
+                      {job.accountName} · {job.departmentName}
                     </span>
                     <span className="figure shrink-0">
                       {job.dueAt ? `due ${formatDate(job.dueAt)}` : "—"}
@@ -108,7 +87,10 @@ export default async function TodayPage() {
             ))}
           </ul>
           <div className="px-4 py-2.5">
-            <Link href="/dashboard/marketplace" className="text-sm text-accent underline-offset-2 hover:underline">
+            <Link
+              href="/dashboard/marketplace"
+              className="text-sm text-accent underline-offset-2 hover:underline"
+            >
               Marketplace
             </Link>
           </div>
@@ -134,9 +116,7 @@ export default async function TodayPage() {
                     >
                       <span className="flex items-center gap-2 text-secondary">
                         <ChrysalisGlyph />
-                        <span className="figure text-xs text-muted">
-                          {channelById(draft.channelId)?.name}
-                        </span>
+                        <span className="figure text-xs text-muted">{draft.channelName}</span>
                       </span>
                       <span className="mt-1 block text-sm text-secondary">
                         {excerpt(draft.body, 90)}
@@ -185,7 +165,10 @@ export default async function TodayPage() {
             </p>
           )}
           <div className="px-4 py-2.5">
-            <Link href="/dashboard/crm/bounties" className="text-sm text-accent underline-offset-2 hover:underline">
+            <Link
+              href="/dashboard/crm/bounties"
+              className="text-sm text-accent underline-offset-2 hover:underline"
+            >
               Bounty board
             </Link>
           </div>
@@ -202,29 +185,26 @@ export default async function TodayPage() {
             </p>
           ) : null}
           <ul>
-            {recent.map((message) => {
-              const sender = personById(message.senderId);
-              return (
-                <li key={message.id} className="border-b border-line last:border-b-0">
-                  <Link
-                    href={`/dashboard/channels/${message.channelId}`}
-                    className="flex h-11 items-center gap-3 px-4 hover:bg-raised"
-                  >
-                    <AvatarBadge id={message.senderId} name={sender?.name ?? "—"} size={20} />
-                    <span className="shrink-0 text-sm font-medium text-primary">{sender?.name ?? "—"}</span>
-                    <span className="figure shrink-0 text-xs text-muted">
-                      {channelById(message.channelId)?.name}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-sm text-secondary">
-                      {excerpt(message.body, 80)}
-                    </span>
-                    <span className="figure shrink-0 text-xs text-muted">
-                      {formatChatTime(message.at, now)}
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
+            {recent.map((message) => (
+              <li key={message.id} className="border-b border-line last:border-b-0">
+                <Link
+                  href={`/dashboard/channels/${message.channelId}`}
+                  className="flex h-11 items-center gap-3 px-4 hover:bg-raised"
+                >
+                  <AvatarBadge id={message.senderId} name={message.senderName} size={20} />
+                  <span className="shrink-0 text-sm font-medium text-primary">
+                    {message.senderName}
+                  </span>
+                  <span className="figure shrink-0 text-xs text-muted">{message.channelName}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm text-secondary">
+                    {excerpt(message.body, 80)}
+                  </span>
+                  <span className="figure shrink-0 text-xs text-muted">
+                    {formatChatTime(message.createdAt, now)}
+                  </span>
+                </Link>
+              </li>
+            ))}
           </ul>
         </section>
       </div>

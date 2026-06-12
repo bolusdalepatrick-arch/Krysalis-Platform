@@ -1,10 +1,9 @@
 import ChrysalisGlyph from "@/components/ChrysalisGlyph";
-import type { MockMessage } from "@/lib/mock";
 
 /** A Shadow progress draft (PRD 7.3): inset panel wearing the chrysalis
  *  glyph, visible to job workers and admins until approved or discarded.
- *  The actions mutate messages and land with the database (M2+). */
-export default function ShadowDraftPanel({ message }: { message: MockMessage }) {
+ *  The approve/edit/discard actions land with M4. */
+export default function ShadowDraftPanel({ message }: { message: { body: string } }) {
   return (
     <div className="rounded-m border border-line bg-raised p-3">
       <div className="figure flex items-center gap-1.5 text-2xs text-muted">

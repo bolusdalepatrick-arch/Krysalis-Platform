@@ -45,6 +45,8 @@ which theme they are in:
 ## Space, radius, density
 
 - Padding from 8/12/16/24/32 (`p-2 p-3 p-4 p-6 p-8`). Page gutter: `px-6`.
+  Dense rail rows may use 10px horizontal padding (`px-2.5`) — ruling,
+  post-M1; everything else stays on the set.
 - Employee hub: table rows `h-9` (36px), list rows `h-11` (44px), body
   `text-md`. Client portal: rows ~52px (`h-13` / `py-3.5`), body `text-base`.
 - Radii: `rounded-s` (inputs, tags, buttons), `rounded-m` (cards, panels),

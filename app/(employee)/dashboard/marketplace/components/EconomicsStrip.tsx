@@ -1,7 +1,6 @@
 import clsx from "clsx";
 import Eyebrow from "@/components/Eyebrow";
 import { formatMoney } from "@/lib/format";
-import type { MockJob } from "@/lib/mock";
 
 /** The economics strip (PRD 7.1): three mono figures under eyebrows.
  *  The transparency is the point — the margin is never hidden. */
@@ -9,10 +8,10 @@ export default function EconomicsStrip({
   job,
   className,
 }: {
-  job: MockJob;
+  job: { grossValue: string | number; workerPool: string | number; firmMargin: string | number };
   className?: string;
 }) {
-  const cells: [string, number][] = [
+  const cells: [string, string | number][] = [
     ["Gross", job.grossValue],
     ["Worker pool", job.workerPool],
     ["Margin", job.firmMargin],

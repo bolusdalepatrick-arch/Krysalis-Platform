@@ -1,6 +1,7 @@
 /** The Shadow (PRD 7.3): an interface with a deterministic default
  *  implementation. A model-backed adapter may replace it behind the same
- *  interface (M7 stretch); the build never requires a key. */
+ *  interface (M8 stretch, gated on ANTHROPIC_API_KEY); the build never
+ *  requires a key and runs fully offline without it. */
 
 export interface ShadowDraft {
   jobId: string;

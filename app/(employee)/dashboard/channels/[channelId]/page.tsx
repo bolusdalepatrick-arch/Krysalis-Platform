@@ -1,21 +1,21 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
 import Composer from "@/components/channels/Composer";
 import MessageRow from "@/components/channels/MessageRow";
 import ShadowDraftPanel from "@/components/channels/ShadowDraftPanel";
 import { channelInfo } from "@/components/channels/channelInfo";
-import { CHANNELS, MESSAGES } from "@/lib/mock";
-import type { MockMessage } from "@/lib/mock";
+import { getSessionUser } from "@/lib/auth";
+import { channelPage, type MessageView } from "@/lib/queries/channels";
 
 /** "Jun 11" — the day-divider label between hairlines (PRD 7.3). */
 function dayLabel(at: string): string {
   return new Date(at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function groupByDay(messages: MockMessage[]): { day: string; items: MockMessage[] }[] {
-  const groups: { day: string; items: MockMessage[] }[] = [];
+function groupByDay(messages: MessageView[]): { day: string; items: MessageView[] }[] {
+  const groups: { day: string; items: MessageView[] }[] = [];
   for (const m of messages) {
-    const day = dayLabel(m.at);
+    const day = dayLabel(m.createdAt);
     const last = groups[groups.length - 1];
     if (last && last.day === day) last.items.push(m);
     else groups.push({ day, items: [m] });
@@ -29,15 +29,14 @@ export default async function ChannelPage({
   params: Promise<{ channelId: string }>;
 }) {
   const { channelId } = await params;
-  const channel = CHANNELS.find((c) => c.id === channelId);
+  const viewer = await getSessionUser();
+  if (!viewer) redirect("/login");
+
+  const channel = await channelPage(channelId, viewer);
   if (!channel) notFound();
 
   const info = channelInfo(channel);
-  const groups = groupByDay(
-    MESSAGES.filter((m) => m.channelId === channel.id).sort((a, b) =>
-      a.at.localeCompare(b.at),
-    ),
-  );
+  const groups = groupByDay(channel.messages);
 
   return (
     <div>

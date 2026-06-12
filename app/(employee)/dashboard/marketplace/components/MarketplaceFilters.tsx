@@ -1,6 +1,5 @@
 import Eyebrow from "@/components/Eyebrow";
 import LinkPill from "@/components/LinkPill";
-import { DEPARTMENTS } from "@/lib/mock";
 import { DEFAULT_DEPARTMENT, STATUS_FILTERS, marketplaceHref } from "./filters";
 
 /** Server-rendered filter rows: links, not client state, so every filtered
@@ -8,9 +7,11 @@ import { DEFAULT_DEPARTMENT, STATUS_FILTERS, marketplaceHref } from "./filters";
 export default function MarketplaceFilters({
   status,
   department,
+  departments,
 }: {
   status: string;
   department: string;
+  departments: { id: string; name: string }[];
 }) {
   return (
     <div className="flex flex-col gap-2 border-b border-line px-6 py-4">
@@ -38,7 +39,7 @@ export default function MarketplaceFilters({
         >
           All
         </LinkPill>
-        {DEPARTMENTS.map((d) => (
+        {departments.map((d) => (
           <LinkPill
             key={d.id}
             href={marketplaceHref(status, d.id)}

@@ -1,8 +1,21 @@
 import { formatDate } from "@/lib/format";
-import { personById } from "@/lib/mock/people";
-import type { MockBookingCard } from "@/lib/mock/types";
 
-function slotLabel(card: MockBookingCard): string {
+/** What a booking card needs to render, independent of source (database row
+ *  or M0 mock). Dates are ISO strings. */
+export interface BookingCardView {
+  company: string;
+  name: string;
+  companySize: string;
+  automationGoal: string;
+  slotStart: string;
+  slotEnd: string;
+  status: "UNCLAIMED" | "CLAIMED" | "ARCHIVED";
+  claimedByName?: string | null;
+  claimedAt?: string | null;
+  submittedAt: string;
+}
+
+function slotLabel(card: BookingCardView): string {
   const start = new Date(card.slotStart);
   const end = new Date(card.slotEnd);
   const day = start.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -17,8 +30,7 @@ function slotLabel(card: MockBookingCard): string {
  * Renders inline in #new-business and on the bounties page. No chrysalis
  * glyph here — that mark is the Shadow's.
  */
-export default function BookingCardPanel({ card }: { card: MockBookingCard }) {
-  const claimer = card.claimedById ? personById(card.claimedById) : undefined;
+export default function BookingCardPanel({ card }: { card: BookingCardView }) {
   return (
     <div className="max-w-xl rounded-m border border-line border-l-2 border-l-accent bg-surface p-4">
       <div className="flex items-baseline justify-between gap-4">
@@ -41,7 +53,7 @@ export default function BookingCardPanel({ card }: { card: MockBookingCard }) {
           </button>
         ) : (
           <p className="figure text-xs text-muted">
-            Claimed by {claimer?.name ?? "a colleague"}
+            Claimed by {card.claimedByName ?? "a colleague"}
             {card.claimedAt ? ` · ${formatDate(card.claimedAt)}` : null}
           </p>
         )}
