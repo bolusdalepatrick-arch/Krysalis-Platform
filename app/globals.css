@@ -1,0 +1,171 @@
+@import "tailwindcss";
+
+/*
+  Krysalis OS theme system.
+  Every component consumes ONLY these tokens (via the Tailwind utilities
+  mapped below) — no hardcoded colors — so flipping the scope class on the
+  root container re-themes the whole app in one 500ms transition.
+*/
+
+:root {
+  /* defaults = employee theme, so body/overscroll match before hydration */
+  --bg-primary: #1a2e22;
+  --bg-secondary: #243f2f;
+  --accent-primary: #a6b91a;
+  --accent-glow: #7ac74c;
+  --accent-highlight: #e5484d;
+  --text-main: #f4fbf7;
+  --text-muted: #8aa495;
+}
+
+/* Theme A — Internal Employee Hub ("Metapod") */
+.theme-employee {
+  --bg-primary: #1a2e22;
+  --bg-secondary: #243f2f;
+  --accent-primary: #a6b91a;
+  --accent-glow: #7ac74c;
+  --accent-highlight: #e5484d; /* red-leaning danger treatment for this theme */
+  --text-main: #f4fbf7;
+  --text-muted: #8aa495;
+}
+
+/* Theme B — External Client Hub ("Butterfree") */
+.theme-client {
+  --bg-primary: #0f0e17;
+  --bg-secondary: #3d354e;
+  --accent-primary: #85a5ff;
+  --accent-glow: #85a5ff;
+  --accent-highlight: #ff4d4f;
+  --text-main: #ffffff;
+  --text-muted: #b3a9c9;
+}
+
+@theme inline {
+  --color-canvas: var(--bg-primary);
+  --color-surface: var(--bg-secondary);
+  --color-accent: var(--accent-primary);
+  --color-glow: var(--accent-glow);
+  --color-alert: var(--accent-highlight);
+  --color-ink: var(--text-main);
+  --color-soft: var(--text-muted);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-grotesk), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  /* Theme switches animate color-ish properties everywhere (PRD §1).
+     Utilities (transition-all etc.) live in a later layer and override this
+     for elements that need their own snappier transitions. */
+  *,
+  *::before,
+  *::after {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-duration: 500ms;
+    transition-timing-function: ease;
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-main);
+  }
+
+  /* Accessibility: visible accent focus rings */
+  :focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+
+  /* Inputs ≥16px so iOS doesn't zoom on focus */
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--text-muted) 35%, transparent) transparent;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes dotpulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.7);
+  }
+}
+
+@keyframes glowpulse {
+  0%,
+  100% {
+    box-shadow: 0 0 6px 0 color-mix(in srgb, var(--accent-glow) 35%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 16px 3px color-mix(in srgb, var(--accent-glow) 65%, transparent);
+  }
+}
+
+/* Tab/view content transition (fade + slide, no layout jank) */
+@utility animate-rise {
+  animation: rise 0.3s ease both;
+}
+
+/* Non-human marker: 2px glow ring + soft outer shadow (PRD §5 Pattern 1) */
+@utility agent-glow {
+  box-shadow: 0 0 12px 1px color-mix(in srgb, var(--accent-glow) 45%, transparent);
+}
+
+@utility agent-glow-pulse {
+  animation: glowpulse 1.8s ease-in-out infinite;
+}
+
+@utility animate-dotpulse {
+  animation: dotpulse 1.2s ease-in-out infinite;
+}
+
+/* Card micro-interaction: hover scale + accent border-glow; pressed state on touch */
+@utility card-pop {
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease,
+    background-color 0.5s ease,
+    color 0.5s ease;
+  @media (hover: hover) {
+    &:hover {
+      transform: scale(1.01);
+      border-color: color-mix(in srgb, var(--accent-glow) 60%, transparent);
+      box-shadow: 0 0 18px -4px color-mix(in srgb, var(--accent-glow) 40%, transparent);
+    }
+  }
+  &:active {
+    transform: scale(0.99);
+  }
+}
