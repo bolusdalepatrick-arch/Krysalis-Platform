@@ -617,7 +617,9 @@ time by `lib/graph/build.ts`:
   assets. Typed sizes (department 28, job 20, person 16, asset 12) and token
   colors (line-strong, accent, text-secondary, warn for in-flight jobs, ok for
   completed). Prospect accounts with no jobs stay off the map — the graph is
-  delivery topology; the pipeline lives in the CRM.
+  delivery topology; the pipeline lives in the CRM. System users (Shadow, Gate)
+  are never person nodes — they deliver no work and sit outside the firm's
+  topology (ruling, pre-M6).
 - Edges: person—department (membership), person—job (worked on), account—job
   (commissioned), asset—job (delivered). No pairwise person—person
   "collaborated" edges — collaboration is legible through shared job nodes, and
@@ -638,7 +640,9 @@ charts), with an All-time / 90-day toggle where noted:
    gross, and the column header's tooltip says so. Honest labeling beats fake
    precision.
 3. **Knowledge contributors** — trailing 30 days: messages sent (excluding
-   Shadow drafts) + 3×forum posts + 2×lesson completions.
+   Shadow output — any message with `approvedById` set, since an approved
+   draft is the Shadow's work, not the approver's — and system users (Shadow,
+   Gate); ruling, pre-M6) + 3×forum posts + 2×lesson completions.
 Computed by indexed queries in `lib/leaderboards.ts`; no stored scores.
 ### 7.8 Client portal
 One theme, two compositions, switched by `Account.kind` on the server. Shared
@@ -731,7 +735,11 @@ admin corrects it for solo clients. The created job stores `dealId`, so the
 graph, the marketplace, and the CRM all agree about where the work came from.
 Repeat business makes `convertWonDeal` re-runnable against an already-ACTIVE
 account: the thread and the portal user are find-or-skip; only the job draft
-repeats (ruling, pre-M5).
+repeats (ruling, pre-M5). The whole conversion is one transaction that
+validates before it writes: the portal-user collision check and the draft-job
+money invariant run first, so a conversion that fails validation commits
+nothing — the account is never left half-flipped to ACTIVE with a thread and a
+login while the admin sees an error (ruling, post-M5).
 Manual entry exists for the non-website world: "New deal" accepts an existing
 account or a new account name + contact, a title, source (REFERRAL / OUTBOUND /
 EVENT), and optional value — so the pipeline is never hostage to the webhook.
@@ -760,7 +768,11 @@ body with `N8N_WEBHOOK_SECRET`, compared timing-safe via `lib/hmac.ts`
 (`node:crypto`, no new dependency) — 401 on mismatch; (2) zod-parses, 422 on
 failure; (3) **upserts** a `BookingCard` on `externalRef = bookingId`, so n8n
 retries are harmless; (4) posts a `Message` to `#new-business` linked to the
-card, sender = the **Gate** system user; (5) `revalidatePath` on the channel
+card, sender = the **Gate** system user — the message is stamped at receipt,
+not the visitor's `submittedAt` (the 5s poll cursor only looks forward, so a
+backdated message would never reach open windows; the card row keeps
+`submittedAt`; ruling, post-M5, the same reasoning as the M4 approval
+re-timestamp); (5) `revalidatePath` on the channel
 and bounties routes; (6) returns `{ "ok": true }`. The 5s channel poll carries
 the card to everyone watching.
 **The card in chat**: a surface panel with a 2px left rule in `--color-accent`,
@@ -781,7 +793,9 @@ the CRM thread: find-or-create the `Account` by case-insensitive name (repeat
 visitors attach to their existing account), create the `Contact`, create a
 `Deal` (title "Halcyon Dental Partners — discovery", stage DISCOVERY, source
 WEBSITE, owner = claimer, booking card linked), and post a follow-up message
-("Claimed by June Park — deal opened."). Claiming is deliberately **not**
+("Claimed — deal opened under Halcyon Dental Partners." — the claimer is the
+sender, so the account name carries the news rather than name replication;
+ruling, post-M5). Claiming is deliberately **not**
 optimistic: two people will race this button, so it shows a pending state and
 the result is authoritative. The card's claimed state replaces the button with
 "Claimed by June Park · Jun 12, 14:08" in muted mono.
