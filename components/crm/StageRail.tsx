@@ -1,6 +1,6 @@
+import type { DealStage } from "@prisma/client";
 import clsx from "clsx";
 import { STAGE_ORDER } from "@/components/crm/stages";
-import type { DealStage } from "@/lib/mock/types";
 
 const WORKING_STAGES = 4; // INBOUND through VERBAL
 

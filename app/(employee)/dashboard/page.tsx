@@ -10,7 +10,8 @@ import { getSessionUser } from "@/lib/auth";
 import { formatChatTime, formatDate, formatDayContext, formatMoney } from "@/lib/format";
 import { openWork } from "@/lib/queries/marketplace";
 import { pendingDrafts, recentActivity } from "@/lib/queries/channels";
-import { BOOKING_CARDS, DEALS, type DealStage } from "@/lib/mock";
+import { pipelineCounts, unclaimedBounties } from "@/lib/queries/crm";
+import type { DealStage } from "@prisma/client";
 
 const STAGES: { stage: DealStage; label: string }[] = [
   { stage: "INBOUND", label: "Inbound" },
@@ -28,24 +29,21 @@ function excerpt(text: string, max: number): string {
 
 /** The Today view (PRD section 6): one composed page of dense blocks, each
  *  linking into its deep route, scoped to the viewer — open work in their
- *  department, their pipeline, drafts they can approve. Marketplace and
- *  channel blocks read the database; the pipeline block reads the M0 mock
- *  until the CRM lands on data (M5). */
+ *  department, their pipeline, drafts they can approve. Every block reads
+ *  the database (the pipeline and bounty blocks landed on data in M5). */
 export default async function TodayPage() {
   const now = new Date();
   const viewer = await getSessionUser();
   if (!viewer) redirect("/login");
 
-  const [openJobs, drafts, recent] = await Promise.all([
+  const isAdmin = viewer.role === "ADMIN";
+  const [openJobs, drafts, recent, stageCounts, bounties] = await Promise.all([
     openWork(viewer.departmentId),
     pendingDrafts(viewer),
     recentActivity(viewer, 8),
+    pipelineCounts(viewer),
+    unclaimedBounties(now),
   ]);
-
-  const isAdmin = viewer.role === "ADMIN";
-  const myDeals = isAdmin ? DEALS : DEALS.filter((deal) => deal.ownerId === viewer.id);
-  const unclaimed = BOOKING_CARDS.filter((c) => c.status === "UNCLAIMED");
-  const newestCard = [...unclaimed].sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))[0];
 
   return (
     <>
@@ -143,7 +141,7 @@ export default async function TodayPage() {
                     {label}
                   </Eyebrow>
                   <span className="figure mt-1 block text-lg text-primary">
-                    {myDeals.filter((d) => d.stage === stage).length}
+                    {stageCounts[stage]}
                   </span>
                 </span>
               ))}
@@ -154,11 +152,11 @@ export default async function TodayPage() {
         <section className="overflow-hidden rounded-m border border-line bg-surface">
           <div className="flex items-baseline justify-between border-b border-line px-4 py-3">
             <Eyebrow as="h2">Unclaimed bounties</Eyebrow>
-            <span className="figure text-xs text-muted">{unclaimed.length}</span>
+            <span className="figure text-xs text-muted">{bounties.count}</span>
           </div>
-          {newestCard ? (
+          {bounties.newest ? (
             <div className="border-b border-line p-4">
-              <BookingCardPanel card={newestCard} />
+              <BookingCardPanel card={bounties.newest} />
             </div>
           ) : (
             <p className="border-b border-line px-4 py-3 text-sm text-secondary">

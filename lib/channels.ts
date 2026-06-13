@@ -41,10 +41,8 @@ export function canViewChannel(viewer: ChannelViewer, channel: ChannelFacts): bo
     case "FIRM":
       return EMPLOYEE_SIDE.includes(viewer.role);
     case "DEPARTMENT":
-      // Open to the whole firm to read; members post (canPostChannel).
-      // The section 6 rail lists all department channels unqualified while
-      // account threads are "the viewer can see" — reading flagged for a
-      // ruling in the M4 report.
+      // Department transparency (PRD 7.3, ruling post-M4): firm-readable,
+      // member-postable — posting stays with canPostChannel.
       return EMPLOYEE_SIDE.includes(viewer.role);
     case "JOB":
       return (

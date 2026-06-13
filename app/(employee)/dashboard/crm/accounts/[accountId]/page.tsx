@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { AccountStatus } from "@prisma/client";
 import { Check } from "lucide-react";
 import AvatarBadge from "@/components/AvatarBadge";
 import Eyebrow from "@/components/Eyebrow";
@@ -8,8 +9,7 @@ import StatusBadge from "@/components/StatusBadge";
 import type { StatusTone } from "@/components/StatusBadge";
 import AccountDealsTable from "@/components/crm/AccountDealsTable";
 import AccountJobsTable from "@/components/crm/AccountJobsTable";
-import { DEALS, JOBS, PEOPLE, accountById } from "@/lib/mock";
-import type { AccountStatus } from "@/lib/mock";
+import { accountDetail } from "@/lib/queries/crm";
 
 const STATUS_TONE: Record<AccountStatus, StatusTone> = {
   PROSPECT: "neutral",
@@ -24,22 +24,15 @@ export default async function AccountDetailPage({
   params: Promise<{ accountId: string }>;
 }) {
   const { accountId } = await params;
-  const account = accountById(accountId);
+  const account = await accountDetail(accountId);
   if (!account) notFound();
-
-  const deals = DEALS.filter((d) => d.accountId === account.id);
-  const jobs = JOBS.filter((j) => j.accountId === account.id);
-  const portalUsers =
-    account.status === "ACTIVE"
-      ? PEOPLE.filter((p) => p.role === "CLIENT" && p.accountId === account.id)
-      : [];
 
   return (
     <div>
       <PageHeader
         eyebrow="Account"
         title={account.name}
-        meta={account.notes}
+        meta={account.notes ?? undefined}
         actions={
           <>
             <StatusBadge tone="neutral">{account.kind}</StatusBadge>
@@ -65,65 +58,71 @@ export default async function AccountDetailPage({
 
       <section className="border-b border-line px-6 py-5">
         <Eyebrow as="h2">Contacts</Eyebrow>
-        <table className="mt-2 w-full text-sm">
-          <thead>
-            <tr className="border-b border-line-strong">
-              <th className="eyebrow py-2 pr-4 text-left font-normal">Name</th>
-              <th className="eyebrow py-2 pr-4 text-left font-normal">Title</th>
-              <th className="eyebrow py-2 pr-4 text-left font-normal">Email</th>
-              <th className="eyebrow py-2 text-left font-normal">Primary</th>
-            </tr>
-          </thead>
-          <tbody>
-            {account.contacts.map((c) => (
-              <tr key={c.email} className="h-9 border-b border-line">
-                <td className="pr-4 font-medium text-primary">{c.name}</td>
-                <td className="pr-4 text-secondary">{c.title ?? "—"}</td>
-                <td className="pr-4">
-                  <span className="figure text-secondary">{c.email}</span>
-                </td>
-                <td>
-                  {c.isPrimary ? (
-                    <Check size={16} strokeWidth={1.5} aria-label="Primary contact" />
-                  ) : (
-                    <span className="text-muted">—</span>
-                  )}
-                </td>
+        {account.contacts.length === 0 ? (
+          <p className="mt-2 text-sm text-secondary">
+            No contacts on file. Claimed bookings and manual deals add them.
+          </p>
+        ) : (
+          <table className="mt-2 w-full text-sm">
+            <thead>
+              <tr className="border-b border-line-strong">
+                <th className="eyebrow py-2 pr-4 text-left font-normal">Name</th>
+                <th className="eyebrow py-2 pr-4 text-left font-normal">Title</th>
+                <th className="eyebrow py-2 pr-4 text-left font-normal">Email</th>
+                <th className="eyebrow py-2 text-left font-normal">Primary</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {account.contacts.map((c) => (
+                <tr key={c.id} className="h-9 border-b border-line">
+                  <td className="pr-4 font-medium text-primary">{c.name}</td>
+                  <td className="pr-4 text-secondary">{c.title ?? "—"}</td>
+                  <td className="pr-4">
+                    <span className="figure text-secondary">{c.email}</span>
+                  </td>
+                  <td>
+                    {c.isPrimary ? (
+                      <Check size={16} strokeWidth={1.5} aria-label="Primary contact" />
+                    ) : (
+                      <span className="text-muted">—</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </section>
 
       <section className="border-b border-line px-6 py-5">
         <Eyebrow as="h2">Deals</Eyebrow>
-        {deals.length === 0 ? (
+        {account.deals.length === 0 ? (
           <p className="mt-2 text-sm text-secondary">
             No deals for this account. Claimed bookings and manual deals open here.
           </p>
         ) : (
-          <AccountDealsTable deals={deals} />
+          <AccountDealsTable deals={account.deals} />
         )}
       </section>
 
-      {jobs.length > 0 ? (
+      {account.jobs.length > 0 ? (
         <section className="border-b border-line px-6 py-5">
           <Eyebrow as="h2">Engagements</Eyebrow>
-          <AccountJobsTable jobs={jobs} />
+          <AccountJobsTable jobs={account.jobs} />
         </section>
       ) : null}
 
       {account.status === "ACTIVE" ? (
         <section className="px-6 py-5">
           <Eyebrow as="h2">Portal access</Eyebrow>
-          {portalUsers.length === 0 ? (
+          {account.portalUsers.length === 0 ? (
             <p className="mt-2 text-sm text-secondary">
               No portal users attached. Converting a won deal provisions one from
               the primary contact.
             </p>
           ) : (
             <div className="mt-2 divide-y divide-line">
-              {portalUsers.map((p) => (
+              {account.portalUsers.map((p) => (
                 <div key={p.id} className="flex h-11 items-center gap-3">
                   <AvatarBadge id={p.id} name={p.name} size={24} />
                   <Link

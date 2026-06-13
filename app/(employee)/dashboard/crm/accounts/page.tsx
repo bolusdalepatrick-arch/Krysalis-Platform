@@ -1,9 +1,9 @@
 import Link from "next/link";
+import type { AccountStatus } from "@prisma/client";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 import type { StatusTone } from "@/components/StatusBadge";
-import { ACCOUNTS, DEALS, JOBS } from "@/lib/mock";
-import type { AccountStatus } from "@/lib/mock";
+import { accountRows } from "@/lib/queries/crm";
 
 const STATUS_TONE: Record<AccountStatus, StatusTone> = {
   PROSPECT: "neutral",
@@ -12,7 +12,8 @@ const STATUS_TONE: Record<AccountStatus, StatusTone> = {
 };
 
 /** Accounts (PRD 7.11): every company the firm touches, with derived counts. */
-export default function AccountsPage() {
+export default async function AccountsPage() {
+  const accounts = await accountRows();
   return (
     <div>
       <PageHeader eyebrow="CRM" title="Accounts" />
@@ -30,46 +31,40 @@ export default function AccountsPage() {
             </tr>
           </thead>
           <tbody>
-            {ACCOUNTS.map((a) => {
-              const dealCount = DEALS.filter((d) => d.accountId === a.id).length;
-              const jobCount = JOBS.filter((j) => j.accountId === a.id).length;
-              return (
-                <tr key={a.id} className="h-9 border-b border-line">
-                  <td className="pr-4">
-                    <Link
-                      href={`/dashboard/crm/accounts/${a.id}`}
-                      className="font-medium text-primary hover:text-accent"
-                    >
-                      {a.name}
-                    </Link>
-                  </td>
-                  <td className="pr-4">
-                    <span className="figure text-2xs uppercase text-secondary">
-                      {a.kind}
-                    </span>
-                  </td>
-                  <td className="pr-4">
-                    <StatusBadge tone={STATUS_TONE[a.status]}>{a.status}</StatusBadge>
-                  </td>
-                  <td className="pr-4">
-                    {a.website ? (
-                      <span className="figure text-secondary">{a.website}</span>
-                    ) : (
-                      <span className="text-muted">—</span>
-                    )}
-                  </td>
-                  <td className="pr-4 text-right">
-                    <span className="figure">{dealCount}</span>
-                  </td>
-                  <td className="pr-4 text-right">
-                    <span className="figure">{jobCount}</span>
-                  </td>
-                  <td className="text-right">
-                    <span className="figure">{a.contacts.length}</span>
-                  </td>
-                </tr>
-              );
-            })}
+            {accounts.map((a) => (
+              <tr key={a.id} className="h-9 border-b border-line">
+                <td className="pr-4">
+                  <Link
+                    href={`/dashboard/crm/accounts/${a.id}`}
+                    className="font-medium text-primary hover:text-accent"
+                  >
+                    {a.name}
+                  </Link>
+                </td>
+                <td className="pr-4">
+                  <span className="figure text-2xs uppercase text-secondary">{a.kind}</span>
+                </td>
+                <td className="pr-4">
+                  <StatusBadge tone={STATUS_TONE[a.status]}>{a.status}</StatusBadge>
+                </td>
+                <td className="pr-4">
+                  {a.website ? (
+                    <span className="figure text-secondary">{a.website}</span>
+                  ) : (
+                    <span className="text-muted">—</span>
+                  )}
+                </td>
+                <td className="pr-4 text-right">
+                  <span className="figure">{a.dealCount}</span>
+                </td>
+                <td className="pr-4 text-right">
+                  <span className="figure">{a.jobCount}</span>
+                </td>
+                <td className="text-right">
+                  <span className="figure">{a.contactCount}</span>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

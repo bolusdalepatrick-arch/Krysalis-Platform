@@ -1,5 +1,5 @@
+import type { DealStage } from "@prisma/client";
 import type { StatusTone } from "@/components/StatusBadge";
-import type { DealStage } from "@/lib/mock/types";
 
 /** Pipeline order (PRD 7.11): four working stages, then the two ends. */
 export const STAGE_ORDER: DealStage[] = [

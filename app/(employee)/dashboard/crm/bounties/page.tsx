@@ -1,13 +1,16 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import Eyebrow from "@/components/Eyebrow";
 import PageHeader from "@/components/PageHeader";
+import ArchiveCardButton from "@/components/crm/ArchiveCardButton";
 import BookingCardPanel from "@/components/crm/BookingCardPanel";
+import ResendWebhookButton from "@/components/crm/ResendWebhookButton";
+import { getSessionUser } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
-import { BOOKING_CARDS, dealById, personById } from "@/lib/mock";
-import type { MockBookingCard } from "@/lib/mock";
+import { bountiesData, type CardView } from "@/lib/queries/crm";
 
 /** "Jun 16, 17:00–17:30" — slot in mono (PRD 7.12). */
-function slotLabel(card: MockBookingCard): string {
+function slotLabel(card: CardView): string {
   const start = new Date(card.slotStart);
   const end = new Date(card.slotEnd);
   const day = start.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -16,14 +19,15 @@ function slotLabel(card: MockBookingCard): string {
   return `${day}, ${t(start)}–${t(end)}`;
 }
 
-/** Bounty board (PRD 7.12): unclaimed cards first, then recent claims. */
-export default function BountiesPage() {
-  const unclaimed = BOOKING_CARDS.filter((c) => c.status === "UNCLAIMED").sort(
-    (a, b) => b.submittedAt.localeCompare(a.submittedAt),
-  );
-  const claimed = BOOKING_CARDS.filter((c) => c.status === "CLAIMED").sort((a, b) =>
-    (b.claimedAt ?? "").localeCompare(a.claimedAt ?? ""),
-  );
+/** Bounty board (PRD 7.12): unclaimed cards first, then recent claims.
+ *  Admins archive expired unclaimed cards (the one ARCHIVED path) and
+ *  resend failed claim notifications from here. */
+export default async function BountiesPage() {
+  const viewer = await getSessionUser();
+  if (!viewer) redirect("/login");
+  const isAdmin = viewer.role === "ADMIN";
+
+  const { unclaimed, claimed, failures } = await bountiesData();
 
   return (
     <div>
@@ -46,11 +50,45 @@ export default function BountiesPage() {
         ) : (
           <div className="mt-3 space-y-3">
             {unclaimed.map((c) => (
-              <BookingCardPanel key={c.id} card={c} />
+              <div key={c.id} className="flex items-start gap-3">
+                <BookingCardPanel card={c} />
+                {isAdmin && c.expired ? (
+                  <div className="pt-4">
+                    <ArchiveCardButton cardId={c.id} />
+                    <p className="mt-1 max-w-44 text-xs text-muted">
+                      The slot has passed unclaimed.
+                    </p>
+                  </div>
+                ) : null}
+              </div>
             ))}
           </div>
         )}
       </section>
+
+      {isAdmin && failures.length > 0 ? (
+        <section className="border-b border-line px-6 py-5">
+          <Eyebrow as="h2">Outbound failures</Eyebrow>
+          <p className="mt-2 text-sm text-secondary">
+            These claims didn&apos;t reach n8n, so the meeting host hasn&apos;t been
+            swapped. The claims themselves stand.
+          </p>
+          <div className="mt-3 space-y-3">
+            {failures.map((c) => (
+              <div
+                key={c.id}
+                className="flex max-w-2xl items-center justify-between gap-4 rounded-m border border-line bg-surface p-4"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-primary">{c.company}</p>
+                  <p className="mt-0.5 text-xs text-danger">{c.lastWebhookError}</p>
+                </div>
+                <ResendWebhookButton cardId={c.id} />
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="px-6 py-5">
         <Eyebrow as="h2">Claim history</Eyebrow>
@@ -71,50 +109,44 @@ export default function BountiesPage() {
               </tr>
             </thead>
             <tbody>
-              {claimed.map((c) => {
-                const claimer = c.claimedById ? personById(c.claimedById) : undefined;
-                const deal = c.dealId ? dealById(c.dealId) : undefined;
-                return (
-                  <tr key={c.id} className="h-9 border-b border-line">
-                    <td className="pr-4 font-medium text-primary">{c.company}</td>
-                    <td className="pr-4 text-secondary">{c.name}</td>
-                    <td className="pr-4">
-                      <span className="figure text-xs text-secondary">
-                        {slotLabel(c)}
-                      </span>
-                    </td>
-                    <td className="pr-4">
-                      {claimer ? (
-                        <Link
-                          href={`/dashboard/people/${claimer.id}`}
-                          className="text-secondary hover:text-accent"
-                        >
-                          {claimer.name}
-                        </Link>
-                      ) : (
-                        <span className="text-muted">—</span>
-                      )}
-                    </td>
-                    <td className="pr-4">
-                      <span className="figure text-secondary">
-                        {c.claimedAt ? formatDate(c.claimedAt) : "—"}
-                      </span>
-                    </td>
-                    <td>
-                      {deal ? (
-                        <Link
-                          href={`/dashboard/crm/deals/${deal.id}`}
-                          className="text-secondary hover:text-accent"
-                        >
-                          {deal.title}
-                        </Link>
-                      ) : (
-                        <span className="text-muted">—</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+              {claimed.map((c) => (
+                <tr key={c.id} className="h-9 border-b border-line">
+                  <td className="pr-4 font-medium text-primary">{c.company}</td>
+                  <td className="pr-4 text-secondary">{c.name}</td>
+                  <td className="pr-4">
+                    <span className="figure text-xs text-secondary">{slotLabel(c)}</span>
+                  </td>
+                  <td className="pr-4">
+                    {c.claimedById ? (
+                      <Link
+                        href={`/dashboard/people/${c.claimedById}`}
+                        className="text-secondary hover:text-accent"
+                      >
+                        {c.claimedByName}
+                      </Link>
+                    ) : (
+                      <span className="text-muted">—</span>
+                    )}
+                  </td>
+                  <td className="pr-4">
+                    <span className="figure text-secondary">
+                      {c.claimedAt ? formatDate(c.claimedAt) : "—"}
+                    </span>
+                  </td>
+                  <td>
+                    {c.dealId ? (
+                      <Link
+                        href={`/dashboard/crm/deals/${c.dealId}`}
+                        className="text-secondary hover:text-accent"
+                      >
+                        {c.dealTitle}
+                      </Link>
+                    ) : (
+                      <span className="text-muted">—</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         )}

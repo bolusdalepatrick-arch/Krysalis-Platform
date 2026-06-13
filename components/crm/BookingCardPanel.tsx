@@ -1,8 +1,10 @@
-import { formatDate } from "@/lib/format";
+import ClaimButton from "@/components/crm/ClaimButton";
+import { formatChatTime, formatDate } from "@/lib/format";
 
-/** What a booking card needs to render, independent of source (database row
- *  or M0 mock). Dates are ISO strings. */
+/** What a booking card needs to render, independent of source (bounties
+ *  query or a channel message). Dates are ISO strings. */
 export interface BookingCardView {
+  id: string;
   company: string;
   name: string;
   companySize: string;
@@ -27,8 +29,10 @@ function slotLabel(card: BookingCardView): string {
 /**
  * A booking card (PRD 7.12): 2px accent left rule, NEW BUSINESS eyebrow,
  * company at 1rem/700, two-line goal, slot in mono, one Claim button.
- * Renders inline in #new-business and on the bounties page. No chrysalis
- * glyph here — that mark is the Shadow's.
+ * Renders inline in #new-business and on the bounties page. Claimed and
+ * archived states read in muted mono, badge-free (ruling, post-M4), the
+ * claim stamped with its time ("Jun 12, 14:08"), not a year. No
+ * chrysalis glyph here — that mark is the Shadow's.
  */
 export default function BookingCardPanel({ card }: { card: BookingCardView }) {
   return (
@@ -44,18 +48,14 @@ export default function BookingCardPanel({ card }: { card: BookingCardView }) {
           {card.name} · {card.companySize} people · {formatDate(card.submittedAt)}
         </p>
         {card.status === "UNCLAIMED" ? (
-          <button
-            type="button"
-            disabled
-            className="h-8 rounded-s bg-accent px-3 text-sm font-medium text-accent-ink disabled:opacity-60"
-          >
-            Claim
-          </button>
-        ) : (
+          <ClaimButton cardId={card.id} />
+        ) : card.status === "CLAIMED" ? (
           <p className="figure text-xs text-muted">
             Claimed by {card.claimedByName ?? "a colleague"}
-            {card.claimedAt ? ` · ${formatDate(card.claimedAt)}` : null}
+            {card.claimedAt ? ` · ${formatChatTime(card.claimedAt)}` : null}
           </p>
+        ) : (
+          <p className="figure text-xs text-muted">Archived — the slot passed unclaimed</p>
         )}
       </div>
     </div>

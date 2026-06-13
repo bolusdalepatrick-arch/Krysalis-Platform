@@ -96,6 +96,119 @@ export const requestChangesSchema = z.object({
     .max(2000, "Keep the note under 2,000 characters."),
 });
 
+// ── CRM & the gate (PRD 7.11–7.12) ──────────────────────────
+
+const zOptionalText = (max: number, message: string) =>
+  z
+    .string()
+    .trim()
+    .max(max, message)
+    .optional()
+    .or(z.literal("").transform(() => undefined));
+
+/** ISO timestamp from n8n — anything Date.parse can't read is a 422. */
+const zIsoInstant = z
+  .string()
+  .refine((value) => !Number.isNaN(Date.parse(value)), "Send an ISO 8601 timestamp.");
+
+/** The inbound booking relay (PRD 7.12) — field-for-field the gate's
+ *  contract. Parsed only after the signature verifies. */
+export const bookingPayloadSchema = z.object({
+  bookingId: z.string().trim().min(1, "bookingId is required.").max(64),
+  slotStart: zIsoInstant,
+  slotEnd: zIsoInstant,
+  name: z.string().trim().min(1, "name is required.").max(120),
+  email: z.email("email must be a valid address."),
+  company: z.string().trim().min(1, "company is required.").max(160),
+  companySize: z.string().trim().min(1, "companySize is required.").max(32),
+  automationGoal: z.string().trim().min(1, "automationGoal is required.").max(2000),
+  submittedAt: zIsoInstant,
+});
+
+export const cardIdSchema = z.object({ cardId: zId });
+
+export const createDealSchema = z
+  .object({
+    accountId: zId.optional().or(z.literal("").transform(() => undefined)),
+    newAccountName: zOptionalText(120, "Keep the account name under 120 characters."),
+    contactName: zOptionalText(120, "Keep the contact name under 120 characters."),
+    contactEmail: z
+      .email("Enter the contact's email address.")
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+    title: z.string().trim().min(3, "Give the deal a title.").max(120, "Keep the title under 120 characters."),
+    source: z.enum(["REFERRAL", "OUTBOUND", "EVENT"], {
+      error: "Pick where this deal came from.",
+    }),
+    value: zMoney.optional().or(z.literal("").transform(() => undefined)),
+    expectedCloseAt: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date.")
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+  })
+  .refine((input) => input.accountId || input.newAccountName, {
+    message: "Pick an account or name a new one.",
+  })
+  .refine(
+    (input) => input.accountId || (input.contactName && input.contactEmail),
+    { message: "A new account needs its contact's name and email." },
+  );
+
+export const updateDealSchema = z.object({
+  dealId: zId,
+  title: zOptionalText(120, "Keep the title under 120 characters."),
+  value: zMoney.optional().or(z.literal("").transform(() => undefined)),
+  expectedCloseAt: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date.")
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  ownerId: zId.optional().or(z.literal("").transform(() => undefined)),
+});
+
+export const setDealStageSchema = z.object({
+  dealId: zId,
+  stage: z.enum(["INBOUND", "DISCOVERY", "PROPOSAL", "VERBAL", "WON", "LOST"], {
+    error: "Pick a stage.",
+  }),
+  note: zOptionalText(500, "Keep the note under 500 characters."),
+});
+
+export const logDealActivitySchema = z.object({
+  dealId: zId,
+  kind: z.enum(["NOTE", "CALL", "EMAIL", "MEETING"], { error: "Pick an activity kind." }),
+  body: z
+    .string()
+    .trim()
+    .min(1, "Write the activity first.")
+    .max(2000, "Keep the entry under 2,000 characters."),
+});
+
+export const convertWonDealSchema = z.object({
+  dealId: zId,
+  provisionPortalUser: z.boolean(),
+  accountKind: z.enum(["INDIVIDUAL", "BUSINESS"]).optional(),
+  draftJob: z
+    .object({
+      title: z.string().trim().min(3, "Give the engagement a title.").max(120, "Keep the title under 120 characters."),
+      brief: z
+        .string()
+        .trim()
+        .min(3, "Add the one-sentence brief the board card shows.")
+        .max(240, "Keep the brief to one sentence."),
+      description: z.string().trim().max(20000, "The description is too long.").default(""),
+      departmentId: zId,
+      workerPool: zMoney,
+      dueAt: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date.")
+        .optional()
+        .or(z.literal("").transform(() => undefined)),
+    })
+    .optional(),
+});
+
 /** First zod issue as renderable copy. */
 export function firstIssue(error: z.ZodError): string {
   return error.issues[0]?.message ?? "Check the form and retry.";
