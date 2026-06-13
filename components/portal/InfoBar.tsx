@@ -6,7 +6,7 @@ import { Pause, Play } from "lucide-react";
 export interface InfoBarItem {
   id: string;
   text: string;
-  href?: string;
+  href?: string | null;
 }
 
 function ItemText({ item }: { item: InfoBarItem }) {

@@ -3,36 +3,30 @@ import Eyebrow from "@/components/Eyebrow";
 import EngagementsTable from "@/components/portal/EngagementsTable";
 import StartHerePanel from "@/components/portal/StartHerePanel";
 import { formatMoney } from "@/lib/format";
-import { DEALS, personById } from "@/lib/mock";
-import type { MockAccount, MockJob, MockPerson } from "@/lib/mock";
-
-const MANAGING_DIRECTOR_ID = "u-mara";
-
-/** The owning employee from the account's won deal, else the managing
- *  director (PRD 7.8). */
-function accountContact(accountId: string): MockPerson | undefined {
-  const won = DEALS.find((deal) => deal.accountId === accountId && deal.stage === "WON");
-  return (won && personById(won.ownerId)) ?? personById(MANAGING_DIRECTOR_ID);
-}
+import type { ClientJobView, PortalContact } from "@/lib/queries/portal";
 
 /**
  * The business composition (PRD 7.8): figures, the contact, the engagements
  * table, the thread, and — until dismissed — the start-here panel, which sits
- * last so it lands directly above the guide (PRD 7.13).
+ * last so it lands directly above the guide (PRD 7.13). Gross only; the firm's
+ * margin never renders here.
  */
 export default function BusinessPortal({
-  account,
+  accountName,
   jobs,
+  contact,
   thread,
+  showStartHere,
 }: {
-  account: MockAccount;
-  jobs: MockJob[];
+  accountName: string;
+  jobs: ClientJobView[];
+  contact: PortalContact | null;
   thread: React.ReactNode;
+  showStartHere: boolean;
 }) {
-  const completed = jobs.filter((job) => job.status === "COMPLETED");
-  const inFlight = jobs.filter((job) => job.status !== "COMPLETED");
-  const invested = completed.reduce((sum, job) => sum + job.grossValue, 0);
-  const contact = accountContact(account.id);
+  const completed = jobs.filter((job) => job.isCompleted);
+  const inFlight = jobs.filter((job) => !job.isCompleted);
+  const invested = completed.reduce((sum, job) => sum + Number(job.grossValue), 0);
 
   return (
     <div className="space-y-10">
@@ -55,10 +49,10 @@ export default function BusinessPortal({
         <section className="rounded-m border border-line bg-surface p-6">
           <Eyebrow as="h2">Your contact</Eyebrow>
           <div className="mt-3 flex items-center gap-3">
-            <AvatarBadge id={contact.id} name={contact.name} size={36} />
+            <AvatarBadge id={contact.email} name={contact.name} size={36} />
             <div className="min-w-0">
               <p className="font-medium text-primary">{contact.name}</p>
-              <p className="text-sm text-secondary">{contact.title}</p>
+              {contact.title ? <p className="text-sm text-secondary">{contact.title}</p> : null}
             </div>
             <a
               href={`mailto:${contact.email}`}
@@ -74,7 +68,9 @@ export default function BusinessPortal({
 
       {thread}
 
-      <StartHerePanel accountName={account.name} contactName={contact?.name ?? "Mara Voss"} />
+      {showStartHere ? (
+        <StartHerePanel accountName={accountName} contactName={contact?.name ?? "Mara Voss"} />
+      ) : null}
     </div>
   );
 }

@@ -1,9 +1,14 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { dismissPortalStart } from "@/app/actions/onboarding";
 import Eyebrow from "@/components/Eyebrow";
 
 /**
  * The start-here orientation panel (PRD 7.13): greets a business account's
- * portal users until dismissed. Dismissing stamps a timestamp on the user row
- * (M2+), so the button renders disabled with its real label.
+ * portal users until dismissed. The one-time Dismiss stamps the user row;
+ * the panel does not return after.
  */
 export default function StartHerePanel({
   accountName,
@@ -12,6 +17,19 @@ export default function StartHerePanel({
   accountName: string;
   contactName: string;
 }) {
+  const router = useRouter();
+  const [error, setError] = useState(false);
+  const [pending, startTransition] = useTransition();
+
+  function dismiss() {
+    setError(false);
+    startTransition(async () => {
+      const result = await dismissPortalStart();
+      if (!result.ok) setError(true);
+      router.refresh();
+    });
+  }
+
   return (
     <section className="rounded-l border border-line bg-surface p-6">
       <Eyebrow as="h2">Start here</Eyebrow>
@@ -40,11 +58,15 @@ export default function StartHerePanel({
       </div>
       <button
         type="button"
-        disabled
-        className="mt-2 text-sm text-muted underline underline-offset-2 disabled:opacity-60"
+        onClick={dismiss}
+        disabled={pending}
+        className="mt-2 text-sm text-muted underline underline-offset-2 hover:text-primary disabled:opacity-60"
       >
-        Dismiss
+        {pending ? "Dismissing" : "Dismiss"}
       </button>
+      {error ? (
+        <p className="mt-1 text-sm text-danger">Couldn&rsquo;t dismiss just now. Retry.</p>
+      ) : null}
     </section>
   );
 }

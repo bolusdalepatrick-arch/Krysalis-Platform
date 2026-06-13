@@ -7,39 +7,43 @@ import IndividualPortal from "@/components/portal/IndividualPortal";
 import InfoBar from "@/components/portal/InfoBar";
 import SharedAssets from "@/components/portal/SharedAssets";
 import { getSessionUser } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { canViewAccount } from "@/lib/access";
 import { channelPage } from "@/lib/queries/channels";
-import { ACCOUNTS, INFO_BAR_MESSAGES, JOBS, PORTAL_GUIDE_MD } from "@/lib/mock";
+import { portalData } from "@/lib/queries/portal";
 
 /** Admins preview the portal as Tidegate — Ruth's view (PRD section 4). */
 const ADMIN_PREVIEW_ACCOUNT_ID = "a-tidegate";
 
 /**
  * The client portal (PRD 7.8): one theme, two compositions, switched by
- * account kind on the server. The message thread is live (M4) — the only
- * channel a CLIENT can see or post in; the rest of the composition reads
- * the M0 narrative until M7.
+ * account kind on the server. Everything is the account-scoped, client-safe
+ * projection — the account is resolved from the session, never a URL id, and
+ * the leakage guarantees in 7.8 hold server-side.
  */
 export default async function ClientPortalPage() {
   const viewer = await getSessionUser();
   if (!viewer) redirect("/login");
 
-  const accountId =
-    viewer.role === "CLIENT" ? viewer.accountId : ADMIN_PREVIEW_ACCOUNT_ID;
-  const account = ACCOUNTS.find((a) => a.id === accountId);
-  if (!account) notFound();
+  const isClient = viewer.role === "CLIENT";
+  const accountId = isClient ? viewer.accountId : ADMIN_PREVIEW_ACCOUNT_ID;
+  if (!accountId) notFound();
+  if (!canViewAccount({ role: viewer.role, accountId: viewer.accountId }, accountId)) {
+    notFound();
+  }
 
-  const jobs = JOBS.filter((job) => job.accountId === account.id);
+  const data = await portalData(accountId, viewer.id);
+  if (!data) notFound();
 
-  const dbChannel = await prisma.channel.findFirst({ where: { accountId: account.id } });
-  const channel = dbChannel ? await channelPage(dbChannel.id, viewer) : null;
+  const channel = data.threadChannelId
+    ? await channelPage(data.threadChannelId, viewer)
+    : null;
   const thread = channel ? (
     <AccountThread
       channelId={channel.id}
       initialMessages={channel.messages}
       canPost={channel.canPost}
       viewer={{ id: viewer.id, name: viewer.name }}
-      withReviewCall={account.kind === "BUSINESS"}
+      withReviewCall={data.account.kind === "BUSINESS"}
     />
   ) : (
     <section>
@@ -51,26 +55,43 @@ export default async function ClientPortalPage() {
     </section>
   );
 
-  const infoMessages = INFO_BAR_MESSAGES.filter((m) => m.isActive)
-    .sort((a, b) => a.order - b.order)
-    .map(({ id, text, href }) => ({ id, text, href }));
-
   return (
     <div className="space-y-10">
-      <InfoBar messages={infoMessages} />
+      <InfoBar messages={data.infoBar} />
 
-      {account.kind === "BUSINESS" ? (
-        <BusinessPortal account={account} jobs={jobs} thread={thread} />
+      {data.account.kind === "BUSINESS" ? (
+        <BusinessPortal
+          accountName={data.account.name}
+          jobs={data.jobs}
+          contact={data.contact}
+          thread={thread}
+          showStartHere={isClient && data.viewer.portalStartDismissedAt === null}
+        />
       ) : (
-        <IndividualPortal jobs={jobs} thread={thread} />
+        <IndividualPortal
+          jobs={data.jobs}
+          assets={data.assets}
+          thread={thread}
+          setup={
+            isClient
+              ? {
+                  name: data.viewer.name,
+                  detailsConfirmedAt: data.viewer.detailsConfirmedAt,
+                  portalStartDismissedAt: data.viewer.portalStartDismissedAt,
+                  briefReviewedAt: data.viewer.briefReviewedAt,
+                  mostRecentJobId: data.mostRecentJobId,
+                }
+              : null
+          }
+        />
       )}
 
       <section id="guide">
         <Eyebrow as="h2">Guide</Eyebrow>
-        <Markdown className="mt-2">{PORTAL_GUIDE_MD}</Markdown>
+        <Markdown className="mt-2">{data.guideMarkdown}</Markdown>
       </section>
 
-      <SharedAssets jobs={jobs} />
+      {data.account.kind === "BUSINESS" ? <SharedAssets assets={data.assets} /> : null}
     </div>
   );
 }

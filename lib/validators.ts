@@ -258,6 +258,74 @@ export const replyToPostSchema = z.object({
     .max(8000, "Keep a reply under 8,000 characters."),
 });
 
+// ── Profile & client onboarding (PRD 7.9, 7.13) ─────────────
+
+export const updateProfileSchema = z.object({
+  name: z.string().trim().min(2, "Enter your name.").max(120, "Keep the name under 120 characters."),
+  title: z
+    .string()
+    .trim()
+    .max(120, "Keep the title under 120 characters.")
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+});
+
+export const confirmDetailsSchema = z.object({
+  name: z.string().trim().min(2, "Enter your name.").max(120, "Keep the name under 120 characters."),
+});
+
+// ── Portal content (PRD 7.9) ────────────────────────────────
+
+export const publishGuideSchema = z.object({
+  markdown: z
+    .string()
+    .trim()
+    .min(1, "The guide can't be empty.")
+    .max(20000, "The guide is too long."),
+});
+
+export const upsertInfoBarSchema = z.object({
+  id: zId.optional().or(z.literal("").transform(() => undefined)),
+  text: z
+    .string()
+    .trim()
+    .min(2, "Write the announcement.")
+    .max(200, "Keep an announcement under 200 characters."),
+  href: z
+    .url("Enter a full URL or leave the link empty.")
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  isActive: z.boolean(),
+});
+
+export const infoBarIdSchema = z.object({ id: zId });
+
+export const reorderInfoBarSchema = z.object({
+  id: zId,
+  direction: z.enum(["up", "down"], { error: "Pick a direction." }),
+});
+
+// ── Admin: the user matrix (PRD 7.9) ────────────────────────
+
+const SYSTEM_ROLES = ["USER", "MODERATOR", "EMPLOYEE", "CLIENT", "ADMIN"] as const;
+
+export const updateUserRoleSchema = z.object({
+  userId: zId,
+  role: z.enum(SYSTEM_ROLES, { error: "Pick a role." }),
+});
+
+export const updateUserDepartmentSchema = z.object({
+  userId: zId,
+  departmentId: zId.optional().or(z.literal("").transform(() => undefined)),
+});
+
+export const createEmployeeSchema = z.object({
+  name: z.string().trim().min(2, "Enter the new hire's name.").max(120, "Keep the name under 120 characters."),
+  email: z.email("Enter a valid work email."),
+  departmentId: zId,
+  role: z.enum(["EMPLOYEE", "MODERATOR"], { error: "New hires start as employee or moderator." }),
+});
+
 /** First zod issue as renderable copy. */
 export function firstIssue(error: z.ZodError): string {
   return error.issues[0]?.message ?? "Check the form and retry.";

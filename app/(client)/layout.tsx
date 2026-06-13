@@ -1,14 +1,17 @@
 import { redirect } from "next/navigation";
 import RoleSwitcher from "@/components/RoleSwitcher";
 import { signOut } from "@/app/actions/auth";
-import { getSessionPersona } from "@/lib/auth";
+import { getSessionUser } from "@/lib/auth";
+import { portalAreaRedirect } from "@/lib/access";
 
 /** Client portal scope: Butterfree theme, 760px reading measure, masthead
- *  with the wing hairline (PRD 5.9). ADMIN may preview (PRD section 4). */
+ *  with the wing hairline (PRD 5.9). ADMIN may preview (PRD section 4);
+ *  everyone else is sent to the hub — resolved server-side from the DB role. */
 export default async function ClientLayout({ children }: { children: React.ReactNode }) {
-  const persona = await getSessionPersona();
-  if (!persona) redirect("/login");
-  if (persona.role !== "CLIENT" && persona.role !== "ADMIN") redirect("/dashboard");
+  const user = await getSessionUser();
+  if (!user) redirect("/login");
+  const elsewhere = portalAreaRedirect(user.role);
+  if (elsewhere) redirect(elsewhere);
 
   return (
     <div className="theme-client min-h-dvh bg-base text-base text-primary">
@@ -19,7 +22,7 @@ export default async function ClientLayout({ children }: { children: React.React
             <p className="eyebrow mt-1">Client portal</p>
           </div>
           <div className="flex items-baseline gap-4">
-            <span className="text-sm text-secondary">{persona.name}</span>
+            <span className="text-sm text-secondary">{user.name}</span>
             <form action={signOut}>
               <button type="submit" className="text-sm text-muted underline-offset-2 hover:text-primary hover:underline">
                 Sign out
@@ -30,7 +33,7 @@ export default async function ClientLayout({ children }: { children: React.React
         <div aria-hidden className="wing-hairline" />
         <main className="pb-24 pt-8">{children}</main>
       </div>
-      <RoleSwitcher activeId={persona.id} />
+      <RoleSwitcher activeId={user.id} />
     </div>
   );
 }

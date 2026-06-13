@@ -1,16 +1,15 @@
 import Eyebrow from "@/components/Eyebrow";
 import { formatDate, formatMoney } from "@/lib/format";
-import { CLIENT_STATUS_LABEL } from "@/lib/mock";
-import type { MockJob } from "@/lib/mock";
+import type { ClientJobView } from "@/lib/queries/portal";
 
 /**
  * The engagements table (PRD 7.8): status in client language, the delivered
  * date for completed work and the due date otherwise, and the gross value —
- * what the client pays is theirs to see.
+ * what the client pays is theirs to see; the firm's margin is not.
  */
-export default function EngagementsTable({ jobs }: { jobs: MockJob[] }) {
+export default function EngagementsTable({ jobs }: { jobs: ClientJobView[] }) {
   const ordered = [...jobs].sort(
-    (a, b) => Number(a.status === "COMPLETED") - Number(b.status === "COMPLETED"),
+    (a, b) => Number(a.isCompleted) - Number(b.isCompleted),
   );
 
   return (
@@ -32,11 +31,11 @@ export default function EngagementsTable({ jobs }: { jobs: MockJob[] }) {
           </thead>
           <tbody>
             {ordered.map((job) => {
-              const date = job.status === "COMPLETED" ? job.completedAt : job.dueAt;
+              const date = job.isCompleted ? job.completedAt : job.dueAt;
               return (
                 <tr key={job.id} className="border-b border-line">
                   <td className="py-3.5 pr-4 text-primary">{job.title}</td>
-                  <td className="py-3.5 pr-4 text-secondary">{CLIENT_STATUS_LABEL[job.status]}</td>
+                  <td className="py-3.5 pr-4 text-secondary">{job.statusLabel}</td>
                   <td className="figure py-3.5 pr-4 text-secondary">
                     {date ? formatDate(date) : "—"}
                   </td>

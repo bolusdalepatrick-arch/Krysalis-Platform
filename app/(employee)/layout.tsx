@@ -4,6 +4,7 @@ import TopBar from "@/components/shell/TopBar";
 import RoleSwitcher from "@/components/RoleSwitcher";
 import ToastProvider from "@/components/toast/ToastProvider";
 import { getSessionUser } from "@/lib/auth";
+import { employeeAreaRedirect } from "@/lib/access";
 import { railChannels } from "@/lib/queries/channels";
 
 /** Employee hub scope: Metapod theme, 248px rail, canopy grain (PRD 5.9).
@@ -13,8 +14,11 @@ import { railChannels } from "@/lib/queries/channels";
 export default async function EmployeeLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
-  if (user.role === "CLIENT") redirect("/client-portal");
-  if (user.role === "USER") redirect("/login");
+  // Server-side leakage guard (PRD 7.8): a CLIENT is refused the hub and
+  // redirected to the portal, a parked USER to login — every route under
+  // this group, not just the ones with nav links.
+  const elsewhere = employeeAreaRedirect(user.role);
+  if (elsewhere) redirect(elsewhere);
 
   const groups = await railChannels(user);
   const rail: RailData = { ...groups };
