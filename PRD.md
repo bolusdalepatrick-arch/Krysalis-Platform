@@ -675,6 +675,29 @@ render here.
 - **Messages**, prominent — for a client of one, the thread is the relationship.
 - No figures row, no contact card panel (the contact's name appears in the
   thread itself); density stays low on purpose.
+**Isolation is enforced server-side, not by hidden links** (ruling, pre-M7 —
+the M7 done-when is adversarial). Three guarantees, each checked on the
+server, none relying on UI omission:
+1. A CLIENT requesting an employee route (`/dashboard` and anything under it
+   — marketplace, CRM, academy, channels, graph, leaderboards, vault) is
+   refused at the route-group layout and redirected to the portal; a parked
+   USER is sent to login. The redirect is the enforcement, not the absence of
+   a nav link.
+2. Internal figures never reach a client-reachable route. `firmMargin`,
+   `workerPool`, bid splits, and deal stages are not merely unrendered — the
+   only route that carries them is the employee job detail, which redirects
+   clients away; the portal's own job and asset reads select client-safe
+   fields only (gross value, plain-language status, delivered/commons
+   assets). A client viewing their own engagement sees the client-safe
+   projection, never the worker economics.
+3. A CLIENT cannot reach another account's portal, thread, or assets by
+   changing an id. The portal composes from the session user's `accountId`
+   resolved server-side — there is no account id in the URL to tamper with —
+   and the account thread, engagements, and shared assets are all scoped to
+   it. `canViewChannel` already refuses a CLIENT any channel but their own
+   ACCOUNT thread (the post-M3/M4 rulings); the same scoping governs jobs and
+   assets. These are pinned by tests the way M4 pinned "a CLIENT planted in
+   `memberIds` gets nothing".
 ### 7.9 Settings
 Tiered by role, as in V1: everyone sees their profile (name, title — email and
 role read-only); MODERATOR adds the guide editor (textarea + live Newsreader
@@ -860,8 +883,11 @@ step a verifiable stamp on the user row:
    `detailsConfirmedAt`.
 2. **How this works** — the same orientation content as the business panel,
    condensed; "Got it" stamps `portalStartDismissedAt`.
-3. **Review your engagement brief** — links to their job's description;
-   "Mark as reviewed" stamps `briefReviewedAt`.
+3. **Review your engagement brief** — links to the account's most recent
+   job's description; "Mark as reviewed" stamps `briefReviewedAt`. If the
+   account has no job yet, the step auto-satisfies rather than stranding the
+   strip below complete — a client of one can finish setup before their
+   first engagement is signed (ruling, pre-M7).
 Steps complete in any order; the strip shows ticks, then collapses to one muted
 line. No XP, no reward — clients are not in the tier system, and loyalty
 points are on the V3 shelf (changes log, item 23).
@@ -1587,7 +1613,13 @@ it once; the Mateo persona finishes the setup strip and it collapses to one
 line; a review-call request sent from the portal appears in the owner's
 CLIENTS rail within one poll; a newly added employee lands with onboarding
 pending; and no internal vocabulary, margin figure, or pipeline language is
-reachable from either client persona.
+reachable from either client persona. The three §7.8 isolation guarantees
+hold server-side and are pinned by tests (ruling, pre-M7): a CLIENT
+requesting an employee route is refused and redirected to the portal, not
+merely shown no link; a CLIENT — even on a job that is theirs — cannot reach
+`firmMargin`, `workerPool`, bid splits, or deal stages on any route; and a
+CLIENT cannot reach another account's portal, thread, or assets by changing
+an id (scoping is by the session `accountId`).
 **M8 — Onboarding & hardening.** The `/dashboard/welcome` first-week page:
 derived checklist, inline profile edit, primer and channel links, "Finish
 setup" with server-side re-verification and the one-time XP award, the rail
