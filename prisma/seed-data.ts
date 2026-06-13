@@ -98,7 +98,11 @@ export const USERS: SeedUser[] = [
   { id: "u-theo", name: "Theo Marchetti", title: "Product Designer", role: "EMPLOYEE", departmentId: "design", email: "theo@krysalis.studio", xp: 980, tier: 3, earnings: 13900, createdAt: "2025-06-23T09:00:00", onboardingCompletedAt: "2025-06-25T11:00:00", history: { jobs: 5, courses: 1, lessons: 8, earnings: 13900 } },
   { id: "u-ines", name: "Ines Castel", title: "UX Researcher", role: "EMPLOYEE", departmentId: "design", email: "ines@krysalis.studio", xp: 560, tier: 2, earnings: 6800, createdAt: "2025-09-01T09:00:00", onboardingCompletedAt: "2025-09-03T14:00:00", history: { jobs: 3, courses: 1, lessons: 4, earnings: 6800 } },
   { id: "u-caleb", name: "Caleb Foster", title: "Motion Designer", role: "EMPLOYEE", departmentId: "design", email: "caleb@krysalis.studio", xp: 330, tier: 2, earnings: 4100, createdAt: "2025-11-17T09:00:00", onboardingCompletedAt: "2025-11-19T10:00:00", history: { jobs: 1, courses: 1, lessons: 3, earnings: 4100 } },
-  { id: "u-noor", name: "Noor Haddad", title: "Junior Designer", role: "EMPLOYEE", departmentId: "design", email: "noor@krysalis.studio", xp: 15, tier: 1, earnings: 0, createdAt: "2026-05-22T09:00:00", history: NO_HISTORY },
+  // Title intentionally unset: Noor joined three weeks ago and stands at 1 of
+  // 3 (Design primer started, the entry and check-in checks still open), so
+  // the welcome page demos the inline "Confirm your entry" step from not-done
+  // (PRD 10 — her checklist count is binding over the staff-register example).
+  { id: "u-noor", name: "Noor Haddad", title: "", role: "EMPLOYEE", departmentId: "design", email: "noor@krysalis.studio", xp: 15, tier: 1, earnings: 0, createdAt: "2026-05-22T09:00:00", history: NO_HISTORY },
 
   { id: "u-sara", name: "Sara Lindqvist", title: "Content Strategist", role: "MODERATOR", departmentId: "marketing", email: "sara@krysalis.studio", xp: 1675, tier: 4, earnings: 19800, createdAt: "2025-02-17T09:00:00", onboardingCompletedAt: "2025-02-19T15:00:00", history: { jobs: 8, courses: 3, lessons: 16, earnings: 19800 } },
   { id: "u-hana", name: "Hana Suzuki", title: "Marketing Lead", role: "EMPLOYEE", departmentId: "marketing", email: "hana@krysalis.studio", xp: 1390, tier: 3, earnings: 16500, createdAt: "2025-03-03T09:00:00", onboardingCompletedAt: "2025-03-05T13:00:00", history: { jobs: 7, courses: 2, lessons: 12, earnings: 16500 } },

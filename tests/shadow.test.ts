@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { composeProgressUpdate, createDeterministicShadow } from "@/lib/shadow/deterministic";
+import { draftBodyFromFacts } from "@/lib/shadow/agent";
 import type { ShadowFacts } from "@/lib/shadow/types";
 
 const FACTS: ShadowFacts = {
@@ -54,5 +55,31 @@ describe("deterministic shadow", () => {
     const draft = await agent.draftProgressUpdate("j-test");
     expect(draft.jobId).toBe("j-test");
     expect(draft.body).toBe(composeProgressUpdate(FACTS));
+  });
+});
+
+describe("shadow selector (PRD 7.3, M8 stretch — additive)", () => {
+  const original = process.env.ANTHROPIC_API_KEY;
+  afterEach(() => {
+    if (original === undefined) delete process.env.ANTHROPIC_API_KEY;
+    else process.env.ANTHROPIC_API_KEY = original;
+  });
+
+  it("defaults to the deterministic draft when no key is set", async () => {
+    delete process.env.ANTHROPIC_API_KEY;
+    expect(await draftBodyFromFacts(FACTS)).toBe(composeProgressUpdate(FACTS));
+  });
+
+  it("falls back to the deterministic draft when the adapter throws", async () => {
+    // Key present, but the network is stubbed to fail — offline and
+    // deterministic. The selector must still return a usable draft.
+    process.env.ANTHROPIC_API_KEY = "sk-test-not-real";
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = () => Promise.reject(new Error("offline"));
+    try {
+      expect(await draftBodyFromFacts(FACTS)).toBe(composeProgressUpdate(FACTS));
+    } finally {
+      globalThis.fetch = realFetch;
+    }
   });
 });

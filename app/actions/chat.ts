@@ -17,7 +17,7 @@ import {
   toFacts,
   type MessageView,
 } from "@/lib/queries/channels";
-import { composeProgressUpdate } from "@/lib/shadow/deterministic";
+import { draftBodyFromFacts } from "@/lib/shadow/agent";
 import { loadShadowFacts } from "@/lib/shadow/load";
 import {
   draftDecisionSchema,
@@ -112,9 +112,11 @@ export async function fetchMessagesAfter(
   });
 }
 
-/** "Draft update" (PRD 7.3): runs the deterministic Shadow over the job's
- *  real figures and stores the draft from the Shadow system user. One
- *  pending draft per channel at a time. */
+/** "Draft update" (PRD 7.3): runs the Shadow over the job's real figures and
+ *  stores the draft from the Shadow system user. The default deterministic
+ *  agent composes offline; with ANTHROPIC_API_KEY set, the env-gated adapter
+ *  composes at request time behind the same interface (M8 stretch, additive).
+ *  One pending draft per channel at a time. */
 export async function requestShadowDraft(input: unknown): Promise<ActionResult<void>> {
   return guarded(EMPLOYEE_SIDE, async (user) => {
     const parsed = jobIdSchema.safeParse(input);
@@ -133,6 +135,12 @@ export async function requestShadowDraft(input: unknown): Promise<ActionResult<v
       return fail("This job is complete; its channel is archived.");
     }
 
+    // Compose the body before the transaction: the adapter may hit the
+    // network, and the aggregate lock below must not be held during it.
+    const shadowFacts = await loadShadowFacts(prisma, parsed.data.jobId);
+    if (!shadowFacts) return fail("That job no longer exists.");
+    const body = await draftBodyFromFacts(shadowFacts);
+
     await prisma.$transaction(async (tx) => {
       // Aggregate guard (section 9, post-M3 rule): lock the channel row
       // first, then count — two concurrent requests serialize here and the
@@ -144,13 +152,11 @@ export async function requestShadowDraft(input: unknown): Promise<ActionResult<v
       if (pending > 0) {
         throw new ActionError("A draft is already waiting. Approve or discard it first.");
       }
-      const shadowFacts = await loadShadowFacts(tx, parsed.data.jobId);
-      if (!shadowFacts) throw new ActionError("That job no longer exists.");
       await tx.message.create({
         data: {
           channelId: channel.id,
           senderId: SHADOW_USER_ID,
-          body: composeProgressUpdate(shadowFacts),
+          body,
           isShadowDraft: true,
         },
       });

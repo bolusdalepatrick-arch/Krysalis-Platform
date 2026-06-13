@@ -6,6 +6,7 @@ import ToastProvider from "@/components/toast/ToastProvider";
 import { getSessionUser } from "@/lib/auth";
 import { employeeAreaRedirect } from "@/lib/access";
 import { railChannels } from "@/lib/queries/channels";
+import { firstWeekStatus } from "@/lib/queries/onboarding";
 
 /** Employee hub scope: Metapod theme, 248px rail, canopy grain (PRD 5.9).
  *  Identity resolves here, on the server — never client state (PRD section 6).
@@ -21,7 +22,13 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
   if (elsewhere) redirect(elsewhere);
 
   const groups = await railChannels(user);
-  const rail: RailData = { ...groups };
+  // The "First week · n of 3" entry sits at the top while onboarding is
+  // pending (PRD 7.13); skip the derivation for everyone already settled in.
+  const firstWeek =
+    user.onboardingCompletedAt === null
+      ? await firstWeekStatus(user).then((s) => ({ done: s.doneCount, total: s.total }))
+      : undefined;
+  const rail: RailData = { firstWeek, ...groups };
 
   return (
     <div className="theme-employee min-h-dvh bg-base text-md text-primary">

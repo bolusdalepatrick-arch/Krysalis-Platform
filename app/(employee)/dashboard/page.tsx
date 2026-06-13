@@ -8,9 +8,11 @@ import TierBadge from "@/components/TierBadge";
 import BookingCardPanel from "@/components/crm/BookingCardPanel";
 import { getSessionUser } from "@/lib/auth";
 import { formatChatTime, formatDate, formatDayContext, formatMoney } from "@/lib/format";
+import { cookies } from "next/headers";
 import { openWork } from "@/lib/queries/marketplace";
 import { pendingDrafts, recentActivity } from "@/lib/queries/channels";
 import { pipelineCounts, unclaimedBounties } from "@/lib/queries/crm";
+import { WELCOME_LANDED_COOKIE } from "@/lib/onboarding";
 import type { DealStage } from "@prisma/client";
 
 const STAGES: { stage: DealStage; label: string }[] = [
@@ -35,6 +37,14 @@ export default async function TodayPage() {
   const now = new Date();
   const viewer = await getSessionUser();
   if (!viewer) redirect("/login");
+
+  // Once-per-session landing for a new hire (PRD 7.13): the first dashboard
+  // visit of a session lands on /dashboard/welcome; the session cookie stops
+  // the repeat, and every other route stays reachable.
+  if (viewer.onboardingCompletedAt === null) {
+    const landed = (await cookies()).get(WELCOME_LANDED_COOKIE)?.value === "1";
+    if (!landed) redirect("/dashboard/welcome");
+  }
 
   const isAdmin = viewer.role === "ADMIN";
   const [openJobs, drafts, recent, stageCounts, bounties] = await Promise.all([
