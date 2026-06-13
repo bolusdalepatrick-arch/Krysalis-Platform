@@ -1398,7 +1398,11 @@ Mateo Vargas (individual client). Every employee has `onboardingCompletedAt`
 set **except Noor Haddad**,
 who joined three weeks ago and stands at 1 of 3 checklist items (enrolled in the
 Design primer, one lesson done, nothing posted yet) — so the welcome page demos
-mid-progress.
+mid-progress. Her checklist count is binding over the staff-register example:
+because §7.13 derives the "confirm your entry" check from name **and title**
+presence, Noor's seed title is intentionally left empty so she reads 1 of 3 and
+the welcome page exercises the inline-edit step from not-done (ruling, M8 —
+resolving the §10 count-vs-register tension toward the explicit "1 of 3").
 **Accounts.** Five ACTIVE BUSINESS accounts — Northbeam Logistics, Cassia
 Health, Fernwell & Co., Ratio Coffee Roasters, Tidegate Insurance — each with a
 linked portal user (`User.accountId`) and 1–2 named contacts. One ACTIVE
