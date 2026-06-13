@@ -1531,16 +1531,28 @@ Conventional commits, one per task, imperative, no emoji:
 ## 12. Quality gates
 - **Types & build:** strict TS, `tsc --noEmit` clean, `next build` clean at every
   milestone boundary.
-- **Tests (vitest):** required coverage of pure domain logic — `lib/money.ts`
-  (invariants, remainder math, Decimal edge cases), `lib/xp.ts` (caps, tier
-  boundaries at 249/250, idempotent lesson award), `lib/leaderboards.ts` scoring,
-  `lib/graph/build.ts` (node/edge derivation from a fixture), `lib/crm.ts`
-  (WON requires value, LOST requires note, account find-or-create is
-  case-insensitive), `lib/hmac.ts` (sign/verify round-trip, tampered body
-  rejected, timing-safe compare used), zod validators,
-  and the deterministic Shadow (same input → same output). One claim-race test:
-  the second `claimBookingCard` against an already-claimed card returns
-  `ok: false` and changes nothing. Action-level tests otherwise optional in V2.
+- **Tests (vitest):** required coverage of pure domain logic and the load-
+  bearing transactions — the gate holds the whole product, not the original
+  pre-CRM subset (brought current, post-M7):
+  - `lib/money.ts` (invariants, remainder math, Decimal edge cases),
+    `lib/xp.ts` (caps, tier boundaries at 249/250, idempotent lesson award),
+    `lib/leaderboards.ts` scoring, `lib/graph/build.ts` (node/edge derivation
+    from a fixture), zod validators, and the deterministic Shadow (same input
+    → same output).
+  - `lib/crm.ts`: WON requires value, LOST requires reason, account
+    find-or-create is case-insensitive.
+  - `lib/hmac.ts`: sign/verify round-trip, tampered body rejected, the
+    compare goes through a timing-safe primitive.
+  - The claim race: the second `claimBookingCard` against an already-claimed
+    card returns `ok: false` and changes nothing.
+  - The aggregate-lock rule (section 9): the final-two-lessons race awards
+    exactly one course bonus — M3's canonical case, `completeLesson` the
+    reference implementation.
+  - The §7.8 leakage guards: the three server-side client-isolation checks —
+    an employee route refuses a CLIENT (and a parked USER), the client-safe
+    job projection carries no `firmMargin`/`workerPool`/bid/stage, and a
+    CLIENT cannot reach another account's thread or data.
+  Action-level tests otherwise optional in V2.
 - **Accessibility:** focus-visible everywhere, semantic tables and landmarks,
   labels on every input, AA contrast in both themes, reduced-motion honored,
   bid flow completable by keyboard alone.
@@ -1627,7 +1639,13 @@ entry and once-per-session landing. Then the hardening pass: accessibility,
 reduced-motion verification, perf budget check, README rewrite (setup,
 personas, the simulate script, tour), full-product §5.10 audit, remaining
 tests. Stretch, only if everything above is green: the env-gated Anthropic
-Shadow adapter. *Done when:* the Noor Haddad persona can be walked 0 → complete
+Shadow adapter — additive, never a dependency (ruling, pre-M8). The
+deterministic agent stays the default and the test target; the adapter is an
+alternate runtime selected at request time behind the same `ShadowAgent`
+interface, gated on `ANTHROPIC_API_KEY`. The seed and the entire suite must
+run and pass with the key **absent** (CI-equivalent green, no key in the
+environment). If the adapter would become a build or test dependency, it does
+not ship. *Done when:* the Noor Haddad persona can be walked 0 → complete
 with exactly one 50 XP award and the entry disappears from the rail; §12 holds
 in full.
 ---
