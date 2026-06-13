@@ -1,11 +1,11 @@
 import Link from "next/link";
 import AvatarBadge from "@/components/AvatarBadge";
-import StatusBadge from "@/components/StatusBadge";
-import { TIER_NAMES } from "@/lib/mock";
-import type { MockPerson } from "@/lib/mock";
+import TierBadge from "@/components/TierBadge";
 
 export interface BoardRow {
-  person: MockPerson;
+  userId: string;
+  name: string;
+  tierLevel: number;
   /** Pre-formatted figure for the right-aligned column. */
   figure: string;
 }
@@ -16,11 +16,16 @@ export default function BoardTable({
   rows,
   figureHeader,
   figureTitle,
+  emptyLabel,
 }: {
   rows: BoardRow[];
   figureHeader: string;
   figureTitle?: string;
+  emptyLabel: string;
 }) {
+  if (rows.length === 0) {
+    return <p className="mt-2 text-sm text-secondary">{emptyLabel}</p>;
+  }
   return (
     <table className="w-full text-sm">
       <thead>
@@ -34,18 +39,18 @@ export default function BoardTable({
       </thead>
       <tbody>
         {rows.map((row, i) => (
-          <tr key={row.person.id} className="h-9 border-b border-line">
+          <tr key={row.userId} className="h-9 border-b border-line">
             <td className="figure px-3 text-muted">{i + 1}</td>
             <td className="px-3">
               <span className="flex items-center gap-2">
-                <AvatarBadge id={row.person.id} name={row.person.name} size={20} />
+                <AvatarBadge id={row.userId} name={row.name} size={20} />
                 <Link
-                  href={`/dashboard/people/${row.person.id}`}
+                  href={`/dashboard/people/${row.userId}`}
                   className="font-medium text-primary hover:text-accent"
                 >
-                  {row.person.name}
+                  {row.name}
                 </Link>
-                <StatusBadge tone="gold">{TIER_NAMES[row.person.tier]}</StatusBadge>
+                <TierBadge level={row.tierLevel} />
               </span>
             </td>
             <td className="figure px-3 text-right text-primary">{row.figure}</td>

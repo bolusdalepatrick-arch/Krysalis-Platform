@@ -209,6 +209,55 @@ export const convertWonDealSchema = z.object({
     .optional(),
 });
 
+// ── Vault (PRD 7.5) ─────────────────────────────────────────
+
+const FILE_TYPES = ["pdf", "doc", "sheet", "image", "figma", "link"] as const;
+
+export const addVaultAssetSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(2, "Give the asset a title.")
+    .max(160, "Keep the title under 160 characters."),
+  fileUrl: z.url("Enter the asset's URL (file storage lands in V3)."),
+  fileType: z.enum(FILE_TYPES, { error: "Pick a file type." }),
+  jobId: zId.optional().or(z.literal("").transform(() => undefined)),
+  sizeKb: z
+    .string()
+    .trim()
+    .regex(/^\d{1,9}$/, "Size is a whole number of kilobytes.")
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+});
+
+export const assetIdSchema = z.object({ assetId: zId });
+
+// ── Forum (PRD 7.4) ─────────────────────────────────────────
+
+export const createForumPostSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .max(160, "Keep the title under 160 characters.")
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  body: z
+    .string()
+    .trim()
+    .min(1, "Write something first.")
+    .max(8000, "Keep a post under 8,000 characters."),
+  departmentId: zId.optional().or(z.literal("").transform(() => undefined)),
+});
+
+export const replyToPostSchema = z.object({
+  parentId: zId,
+  body: z
+    .string()
+    .trim()
+    .min(1, "Write a reply first.")
+    .max(8000, "Keep a reply under 8,000 characters."),
+});
+
 /** First zod issue as renderable copy. */
 export function firstIssue(error: z.ZodError): string {
   return error.issues[0]?.message ?? "Check the form and retry.";
