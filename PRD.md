@@ -461,7 +461,10 @@ app/
 Left rail order: Today, Marketplace, CRM, Academy, Channels (with department/job
 sub-list), Forum, Vault, Graph, Leaderboards. While a user's onboarding is
 incomplete, a "First week" entry with a progress count ("2 of 3") sits at the
-very top. Department channels nest under a "CHANNELS" eyebrow; job channels
+very top. Department channels nest under a "CHANNELS" eyebrow — all four list
+for every employee-side viewer, because department channels are firm-readable;
+posting stays with members + admins (ruling, post-M4, mirroring 7.3); job
+channels
 under "ACTIVE JOBS"; `#new-business` sits alone under "FIRM"; account threads
 the viewer can see nest under "CLIENTS"; the viewer's DMs nest under a
 "DIRECT" eyebrow (ruling, post-M3).
@@ -546,7 +549,8 @@ earnings, completed jobs (with clients), courses finished, and a reverse-chrono
 ledger from `XpEvent`. This page is what the leaderboards link into.
 ### 7.3 Channels and the Shadow
 Channel kinds: DEPARTMENT (one per department, created in seed), JOB (created
-automatically when a job becomes ASSIGNED, archived visually when COMPLETED),
+automatically when a job becomes ASSIGNED; archived when COMPLETED — archived
+channels refuse new Shadow drafts server-side; ruling, post-M4),
 DM (explicit `ChannelMember` rows; created by `startDm` — find-or-create on
 the unique employee pair, no group DMs in V2 — surfaced as one "Message"
 affordance on the profile page; ruling, post-M3), FIRM (firm-wide; membership
@@ -558,7 +562,10 @@ non-COMPLETED jobs + admins — ruling, post-M1). One FIRM channel ships
 in V2: `#new-business`, home of the Bounty Board (7.12) — booking cards render
 inline there as structured messages. Membership for DEPARTMENT/JOB is likewise
 derived (department members; assigned workers + moderators + admins, per the
-section 4 matrix — alignment ruling, post-M3). ACCOUNT threads list
+section 4 matrix — alignment ruling, post-M3). Department channels are
+transparent across the firm: every employee-side role reads any department
+channel; posting stays with that department's members plus admins (ruling,
+post-M4 — posting is membership, reading is transparency). ACCOUNT threads list
 on the employee rail under a "CLIENTS" eyebrow for their owner and admins, and
 render inside the portal for clients; they are the only channels a CLIENT can
 see or post in.
@@ -572,8 +579,11 @@ machine, not a chat gimmick:
   draftProgressUpdate(jobId: string): Promise<ShadowDraft> }`.
 - `lib/shadow/deterministic.ts` is the default implementation: it reads strictly
   job data — status, % of pool allocated, days to due date, latest delivered
-  assets, and the last 10 messages — and assembles a 3–5 sentence progress update
-  from composed sentence templates. Same input, same output. No network.
+  assets, and the last 10 human messages (facts load from human messages only;
+  Shadow drafts and prior approved updates are never source material — ruling,
+  post-M4) — and assembles a progress update from composed sentence templates:
+  three to five sentences when the job gives it material — never padded to
+  length (ruling, post-M4). Same input, same output. No network.
 - `lib/shadow/anthropic.ts` (optional, M8 stretch): if `ANTHROPIC_API_KEY` is set,
   a model-backed adapter replaces the deterministic one behind the same interface.
   The build must never require the key.
@@ -582,8 +592,9 @@ Flow: in a JOB channel, workers see a "Draft update" affordance → action creat
 Drafts render inset with the chrysalis glyph, visible only to that job's
 workers, moderators, and admins (the section 4 matrix — alignment ruling,
 post-M3), with Approve / Edit / Discard. Approving stamps `approvedById`,
-clears the draft
-flag, and the message becomes visible to the channel, attributed "Shadow · approved
+clears the draft flag, and re-timestamps the message to its approval moment —
+that is when it becomes a channel message, and ordering follows (ruling,
+post-M4). It joins the channel attributed "Shadow · approved
 by Daniel Okafor" in muted text, badge-free (ruling, post-M3). Discard deletes it.
 "Agent Control" from V1 becomes the dashboard's "Pending drafts" block plus the
 per-channel affordance — not a separate fake-agent showcase.
@@ -707,15 +718,20 @@ ACTIVE / DORMANT), website, notes, contacts table, deals table, jobs table
 **Converting a won deal** is the seam between selling and delivering, and it is
 ADMIN-gated (job creation already is, per section 4). On a WON deal, an admin
 sees "Convert to engagement": one panel that (a) flips the account to ACTIVE
-and provisions its message thread (7.3), (b) optionally provisions a CLIENT
+and provisions its message thread (7.3), (b) provisions a CLIENT
 portal user from the primary contact's name
-and email (mock auth — no invitation machinery in V2), and (c) opens the
+and email — on by default, the admin may exclude it (mock auth — no invitation
+machinery in V2; ruling, pre-M5, resolving 15.5), and (c) opens the
 create-job form prefilled with the deal's account, a title derived from the deal,
-and `grossValue` = the deal's value. The account's kind (INDIVIDUAL or
+and `grossValue` = the deal's value — a draft the admin confirms: optional,
+never silent (ruling, pre-M5). The account's kind (INDIVIDUAL or
 BUSINESS) is set here if it arrived ambiguous from the website — bookings carry
 a company string, so cards default the account to BUSINESS; the converting
 admin corrects it for solo clients. The created job stores `dealId`, so the
 graph, the marketplace, and the CRM all agree about where the work came from.
+Repeat business makes `convertWonDeal` re-runnable against an already-ACTIVE
+account: the thread and the portal user are find-or-skip; only the job draft
+repeats (ruling, pre-M5).
 Manual entry exists for the non-website world: "New deal" accepts an existing
 account or a new account name + contact, a title, source (REFERRAL / OUTBOUND /
 EVENT), and optional value — so the pipeline is never hostage to the webhook.
@@ -752,6 +768,11 @@ a "NEW BUSINESS" eyebrow, the company name at 1rem/700, the goal excerpt
 (two lines, then truncation), the slot in mono ("Jun 18, 15:00–15:30"), and one
 button — "Claim". The same cards list at `/dashboard/crm/bounties` (unclaimed
 first, then recent claims). No chrysalis glyph here; that mark is the Shadow's.
+ARCHIVED has exactly one path (ruling, pre-M5): on the bounties page, an ADMIN
+sees an "Archive" affordance on expired unclaimed cards — `slotEnd` in the
+past — backed by one conditional-write action, `archiveBookingCard`
+(UNCLAIMED → ARCHIVED). No auto-archival; a card leaves the board because a
+person decided it should.
 **Claiming — first claim wins, atomically.** `claimBookingCard` runs a
 conditional update (`status = UNCLAIMED → CLAIMED`, set `claimedById`,
 `claimedAt`); if zero rows match, the action returns
@@ -778,6 +799,13 @@ calls. Mocked outbound logs the signed payload and succeeds. For development
 and demos, `npm run simulate:booking` (a `tsx` script) signs a sample payload
 and POSTs it to the local handler — the entire loop, card to claim to deal, runs
 with no n8n anywhere.
+Mock conventions (ruling, pre-M5): `.env.example` ships `MOCK_WEBHOOKS` unset
+(the default already means mock outside production), a clearly marked dev
+placeholder for `N8N_WEBHOOK_SECRET` (`dev-not-a-secret`) so `simulate:booking`
+verifies on a fresh clone, and `N8N_CLAIM_WEBHOOK` empty. Mirroring the gate's
+mock-failure convention: in mock mode, a claim on a card whose company contains
+"409" simulates outbound failure, populating `lastWebhookError` so the admin
+resend path is demoable offline. The README documents all three at M8.
 ### 7.13 Onboarding — first week and start here
 **Employees: the first week.** A new account (created by an admin via "Add
 employee" in settings, or seeded) has `onboardingCompletedAt = null`. Until it
@@ -1279,11 +1307,12 @@ one front door, HMAC-verified before anything else runs.
 | `updateUserRole` / `updateUserDepartment` | userId, value | ADMIN; confirmation copy echoes the change |
 | `claimBookingCard` | cardId | atomic first-claim (conditional update); same tx: find-or-create Account by name, create Contact + Deal (DISCOVERY, WEBSITE, owner = claimer), post claim message; after commit: signed claim webhook to n8n, failure stored on the card |
 | `resendClaimWebhook` | cardId | ADMIN; retries the outbound notification |
+| `archiveBookingCard` | cardId | ADMIN; conditional UNCLAIMED → ARCHIVED, only when `slotEnd` is past — the one ARCHIVED path, no auto-archival (7.12) |
 | `createDeal` | accountId? or newAccount{name, contactName, contactEmail}, title, source, value?, expectedCloseAt? | manual pipeline entry (7.11) |
 | `updateDeal` | dealId, patch | owner or ADMIN |
 | `setDealStage` | dealId, stage, note? | writes STAGE_CHANGE activity; WON requires value (stamps wonAt, XP `DEAL_WON`); LOST requires note (stamps lostAt, lostReason) |
 | `logDealActivity` | dealId, kind, body | NOTE / CALL / EMAIL / MEETING |
-| `convertWonDeal` | dealId, provisionPortalUser?, draftJob? | ADMIN; tx: account → ACTIVE, ACCOUNT thread provisioned, optional CLIENT user from primary contact, optional OPEN job prefilled gross = deal value, `Job.dealId` set |
+| `convertWonDeal` | dealId, provisionPortalUser?, draftJob? | ADMIN; tx: account → ACTIVE, ACCOUNT thread provisioned, CLIENT user from primary contact (on by default, admin may exclude), optional OPEN job prefilled gross = deal value, `Job.dealId` set; re-runnable — thread and portal user find-or-skip, only the job draft repeats (7.11) |
 | `createEmployee` | name, email, departmentId, role | ADMIN; account created with onboarding pending |
 | `completeOnboarding` | — | re-verifies the three 7.13 checks server-side; stamps timestamp; XP `ONBOARDING_COMPLETED` once |
 | `dismissPortalStart` | — | client persona; stamps portalStartDismissedAt |
@@ -1583,7 +1612,10 @@ Listing these is part of the spec: do not gold-plate toward them.
    whether M5 should ship mock-only or wired.
 5. **Won-deal handoff:** conversion auto-provisions the client portal user from
    the primary contact (as specified in 7.11). Confirm this, or say if portal
-   access should instead wait for a manual step.
+   access should instead wait for a manual step. *Resolved pre-M5:*
+   auto-provisioning stands — on by default in the conversion panel, with an
+   admin exclude; the prefilled job is a draft the admin confirms, optional and
+   never silent (7.11).
 ---
 ## 16. Kickoff prompt for Claude Code
 ```text
