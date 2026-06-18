@@ -1,6 +1,10 @@
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // Pooled connection for serverless runtime; the direct (unpooled)
+  // connection for migrations. On a hosted provider (Neon on Vercel) these
+  // differ; a single-host local Postgres points both at the same URL.
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 generator client {
