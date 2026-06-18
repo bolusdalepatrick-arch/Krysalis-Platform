@@ -6,8 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "postinstall": "prisma generate",
     "test": "vitest run",
     "db:seed": "prisma db seed",
+    "db:deploy": "prisma migrate deploy",
     "simulate:booking": "tsx scripts/simulate-booking.ts"
   },
   "dependencies": {
